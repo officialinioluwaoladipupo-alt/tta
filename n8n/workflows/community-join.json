@@ -1,0 +1,107 @@
+{
+    "name": "TTA - Community Join Automation",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "community-join",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                300
+            ],
+            "id": "webhook-id"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{$json[\"routing\"]}}",
+                            "value2": "DISCORD"
+                        }
+                    ]
+                }
+            },
+            "name": "Is Restricted?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                350,
+                300
+            ],
+            "id": "if-node-id"
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "email": "={{$node[\"Webhook\"].json[\"email\"]}}",
+                "subject": "Welcome to TTA (Discord)",
+                "message": "Hi {{$node[\"Webhook\"].json[\"fullName\"]}}, welcome to The Thinking Architect! Since you are in {{$node[\"Webhook\"].json[\"country\"]}}, you can join our Discord community here: https://discord.gg/yourlink",
+                "appendAttributions": false
+            },
+            "name": "Send Discord Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                600,
+                200
+            ],
+            "id": "discord-email-id"
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "email": "={{$node[\"Webhook\"].json[\"email\"]}}",
+                "subject": "Welcome to TTA (WhatsApp)",
+                "message": "Hi {{$node[\"Webhook\"].json[\"fullName\"]}}, welcome to The Thinking Architect! You can join our WhatsApp community here: https://chat.whatsapp.com/yourlink",
+                "appendAttributions": false
+            },
+            "name": "Send WhatsApp Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                600,
+                400
+            ],
+            "id": "whatsapp-email-id"
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Is Restricted?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Restricted?": {
+            "main": [
+                [
+                    {
+                        "node": "Send Discord Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Send WhatsApp Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {}
+}

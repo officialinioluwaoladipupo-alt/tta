@@ -1,76 +1,65 @@
-import { queryStrapi, getStrapiMedia } from "./strapi";
+import { queryAirtable, getAirtableImage } from "./airtable";
 
 export async function getGlobalSettings() {
-  const endpoints = [
-    "/global-setting",
-    "/global-settings",
-    "/global_setting",
-    "/globalsetting",
-    "/globalsettings"
-  ];
-
-  for (const endpoint of endpoints) {
-    const response = await queryStrapi(endpoint, {
-      next: { revalidate: 0 }
+  try {
+    const settings = await queryAirtable("Settings", {
+      returnFieldsByFieldId: true
     });
-    if (response) {
-      console.log(`[Strapi] SUCCESS: Found global settings at ${endpoint}`);
-      const attrs = response.attributes || response;
+
+    if (settings && settings.length > 0) {
+      const s = settings[0];
       return {
-        ...attrs,
-        defaultSeoImage: getStrapiMedia(attrs.defaultSeoImage)
+        siteName: s.fldJHiVrjfL3BeX4E as string,
+        siteDescription: s.fldmQGL4x54GUT8sB as string,
+        marqueeText: s.fldzwzjC7K5TwNIq7 as string,
+        defaultSeoImage: getAirtableImage(s.fldrq35F3RQmlo9E6)
       };
     }
+  } catch (error) {
+    console.warn("[Airtable] Failed to fetch global settings");
   }
-
   return null;
 }
 
 export async function getAllPrograms() {
-  const response = await queryStrapi("/programs?populate=image,seoImage", {
-    next: { revalidate: 3600 }
+  const records = await queryAirtable("tblHShOUifU1m6EkS", {
+    sort: [{ field: "fldJGpX7Oj9ElKfAi", direction: "asc" }], // Sort by Title ID
+    returnFieldsByFieldId: true
   });
 
-  if (!response || !Array.isArray(response)) return [];
-
-  return response.map((item: any) => {
-    const attrs = item.attributes || item; // Handle both flat and nested structure
-    return {
-      slug: attrs.slug,
-      title: attrs.title,
-      label: attrs.label,
-      status: attrs.status,
-      featured: attrs.featured,
-      description: attrs.description,
-      image: getStrapiMedia(attrs.image),
-      seoTitle: attrs.seoTitle,
-      seoDescription: attrs.seoDescription,
-      seoImage: getStrapiMedia(attrs.seoImage)
-    };
-  });
+  return records.map((record: any) => ({
+    slug: record.fldposSLgP7UKY3oU,
+    title: record.fldJGpX7Oj9ElKfAi,
+    label: record.fldtOunVPReRnvVGz,
+    status: record.fldger01xzPMYfiZh,
+    featured: record.fldkKaRGFxoAhK2j6,
+    description: record.fldYzRVAc6wWZayWE,
+    image: getAirtableImage(record.fldmfK9ySWvpVCPE8),
+    seoTitle: record.fldfEd5BB5ShohfnS,
+    seoDescription: record.fldB2tqhZErMqcTUr,
+    seoImage: getAirtableImage(record.fldg9Eg7AHrksMmMp)
+  }));
 }
 
 export async function getProgramBySlug(slug: string) {
-  const response = await queryStrapi(`/programs?filters[slug][$eq]=${slug}&populate=image,seoImage`, {
-    next: { revalidate: 3600 }
+  const records = await queryAirtable("tblHShOUifU1m6EkS", {
+    returnFieldsByFieldId: true
   });
 
-  if (!response || !Array.isArray(response) || response.length === 0) return null;
-
-  const item = response[0];
-  const attrs = item.attributes || item;
+  const record = records.find((r: any) => r.fldposSLgP7UKY3oU === slug);
+  if (!record) return null;
 
   return {
-    slug: attrs.slug,
-    title: attrs.title,
-    label: attrs.label,
-    status: attrs.status,
-    featured: attrs.featured,
-    description: attrs.description,
-    content: attrs.content,
-    image: getStrapiMedia(attrs.image),
-    seoTitle: attrs.seoTitle,
-    seoDescription: attrs.seoDescription,
-    seoImage: getStrapiMedia(attrs.seoImage)
+    slug: record.fldposSLgP7UKY3oU,
+    title: record.fldJGpX7Oj9ElKfAi,
+    label: record.fldtOunVPReRnvVGz,
+    status: record.fldger01xzPMYfiZh,
+    featured: record.fldkKaRGFxoAhK2j6,
+    description: record.fldYzRVAc6wWZayWE,
+    content: record.fldtM2lAoLIlotb5H,
+    image: getAirtableImage(record.fldmfK9ySWvpVCPE8),
+    seoTitle: record.fldfEd5BB5ShohfnS,
+    seoDescription: record.fldB2tqhZErMqcTUr,
+    seoImage: getAirtableImage(record.fldg9Eg7AHrksMmMp)
   };
 }

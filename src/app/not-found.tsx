@@ -15,6 +15,7 @@ export default function NotFound() {
       duration: 10 + Math.random() * 20,
       left: Math.random() * 100,
     }));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDecorElements(elements);
   }, []);
 
@@ -26,14 +27,14 @@ export default function NotFound() {
         {decorElements.map((el, i) => (
           <motion.div
             key={i}
-            animate={{ 
+            animate={{
               x: [0, el.x, 0],
               opacity: [0.1, 0.3, 0.1]
             }}
             transition={{ duration: el.duration, repeat: Infinity }}
             className="absolute text-[10rem] font-black uppercase tracking-tighter whitespace-nowrap"
-            style={{ 
-              top: `${i * 5}%`, 
+            style={{
+              top: `${i * 5}%`,
               left: `${el.left}%`,
               transform: "translate(-50%, -50%)"
             }}
@@ -43,13 +44,13 @@ export default function NotFound() {
         ))}
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 flex flex-col items-center text-center max-w-2xl"
       >
-        <motion.div 
+        <motion.div
           animate={{ rotate: [0, -5, 5, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className="mb-12 w-32 h-32 bg-accent/10 border border-accent/20 flex items-center justify-center text-accent"
@@ -57,9 +58,9 @@ export default function NotFound() {
           <ShieldAlert size={64} />
         </motion.div>
 
-        <GlitchText 
-          as="h1" 
-          text="ACCESS RESTRICTED" 
+        <GlitchText
+          as="h1"
+          text="ACCESS RESTRICTED"
           className="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-none"
         />
 
@@ -73,19 +74,19 @@ export default function NotFound() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-6 w-full max-w-md">
-           <Link href="/" className="btn-primary flex-1 py-5 text-xl group">
-              <ArrowLeft className="group-hover:-translate-x-1 transition-transform" /> Return to Base
-           </Link>
-           <Link href="/programs" className="btn-outline flex-1 py-5 text-xl">
-              Directory
-           </Link>
+          <Link href="/" className="btn-primary flex-1 py-5 text-xl group">
+            <ArrowLeft className="group-hover:-translate-x-1 transition-transform" /> Return to Base
+          </Link>
+          <Link href="/programs" className="btn-outline flex-1 py-5 text-xl">
+            Directory
+          </Link>
         </div>
       </motion.div>
 
       {/* Frame Decors */}
       <div className="fixed top-12 left-12 border-l border-t border-accent/20 w-40 h-40 pointer-events-none" />
       <div className="fixed bottom-12 right-12 border-r border-b border-accent/20 w-40 h-40 pointer-events-none" />
-      
+
       <div className="fixed top-12 right-12 text-[10px] font-black uppercase tracking-[0.5em] text-accent/40 rotate-90 origin-right translate-y-20">
         Structural Protocol Verification
       </div>

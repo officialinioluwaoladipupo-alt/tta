@@ -1,4 +1,4 @@
-import { queryStrapi, getStrapiMedia } from "./strapi";
+import { queryAirtable, getAirtableImage } from "./airtable";
 
 export interface CommunityHighlight {
     id: string;
@@ -7,33 +7,27 @@ export interface CommunityHighlight {
     link?: string;
     image?: string;
     isActive: boolean;
-    expiryDate?: string; // Datetime from Strapi is a string
+    expiryDate?: string;
 }
 
 export async function getCommunityHighlights(): Promise<CommunityHighlight[]> {
-    const response = await queryStrapi("/highlights?populate=image", {
-        next: { revalidate: 3600 }
+    const records = await queryAirtable("tblA6otl7k9GEIKzr", {
+        returnFieldsByFieldId: true
     });
 
-    if (!response || !Array.isArray(response)) {
+    if (!records) {
         return [];
     }
 
-    const now = new Date();
-
-    const mappedItems = response.map((item: any) => {
-        const attrs = item.attributes || item;
-        return {
-            id: item.id.toString(),
-            text: attrs.text,
-            type: attrs.type,
-            link: attrs.link,
-            isActive: attrs.isActive,
-            expiryDate: attrs.expiryDate,
-            image: getStrapiMedia(attrs.image) || undefined
-        };
-    });
-
-    console.log(`[Strapi] Mapped Highlights:`, mappedItems);
-    return mappedItems;
+    return records
+        .map((record: any) => ({
+            id: record.id,
+            text: record.fldgZo63Sh0FIouxr,
+            type: record.fldhj9z8zUncd2WHt,
+            link: record.fldwUq6RZ8GORfYEU,
+            isActive: record.fldm41s0glSxCrw4Z === true, // Checkboxes return bool in JSON mode
+            expiryDate: record.fldj7sHOsPwLXNAzE,
+            image: getAirtableImage(record.fld7Bc63XfnJ2rtNV) || undefined
+        }))
+        .filter(highlight => highlight.isActive);
 }

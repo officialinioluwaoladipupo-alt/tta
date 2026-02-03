@@ -2,7 +2,22 @@
 
 import { motion } from "framer-motion";
 
+import { useState, useEffect } from "react";
+
 export default function GlitchOverlay() {
+    const [glitchConfig, setGlitchConfig] = useState<any[]>([]);
+
+    useEffect(() => {
+        setGlitchConfig([...Array(10)].map(() => ({
+            x: (Math.random() - 0.5) * 100,
+            y: (Math.random() - 0.5) * 100,
+            width: Math.random() * 200 + 50,
+            height: Math.random() * 100 + 20,
+            delay: Math.random() * 0.2,
+            top: Math.random() * 100,
+            left: Math.random() * 100
+        })));
+    }, []);
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -26,27 +41,28 @@ export default function GlitchOverlay() {
             />
 
             {/* Random Glitch Blocks */}
-            {[...Array(10)].map((_, i) => (
+            {/* Random Glitch Blocks */}
+            {glitchConfig.map((glitch, i) => (
                 <motion.div
                     key={i}
                     className="absolute bg-accent/20"
                     initial={{ opacity: 0 }}
                     animate={{
                         opacity: [0, 1, 0],
-                        x: [0, (Math.random() - 0.5) * 100, 0],
-                        y: [0, (Math.random() - 0.5) * 100, 0],
-                        width: [0, Math.random() * 200 + 50, 0],
-                        height: [0, Math.random() * 100 + 20, 0]
+                        x: [0, glitch.x, 0],
+                        y: [0, glitch.y, 0],
+                        width: [0, glitch.width, 0],
+                        height: [0, glitch.height, 0]
                     }}
                     transition={{
                         duration: 0.4,
                         repeat: Infinity,
                         repeatType: "reverse",
-                        delay: Math.random() * 0.2
+                        delay: glitch.delay
                     }}
                     style={{
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`
+                        top: `${glitch.top}%`,
+                        left: `${glitch.left}%`
                     }}
                 />
             ))}

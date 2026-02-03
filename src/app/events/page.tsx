@@ -1,61 +1,57 @@
-"use client";
+import { getUpcomingEvents } from "@/lib/event-data";
+import EventCard from "@/components/events/EventCard";
+import { Metadata } from "next";
 
-import { motion } from "framer-motion";
-import GlitchText from "@/components/ui/GlitchText";
+export const metadata: Metadata = {
+  title: "Events - The Thinking Architect",
+  description: "Upcoming masterclasses, workshops, and community sessions.",
+};
 
-export default function Events() {
+export default async function EventsPage() {
+  const events = await getUpcomingEvents();
+
   return (
-    <div className="bg-background min-h-screen text-foreground flex flex-col items-center">
-      <section className="max-w-[1600px] w-full px-6 pt-40 pb-20 border-x border-foreground/5">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="flex flex-col gap-6 max-w-4xl"
-        >
-          <span className="text-[11px] font-black uppercase tracking-[0.3em] text-accent">Section 03 / Schedule</span>
-          <GlitchText as="h1" text="UPCOMING SESSIONS" className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter text-foreground" />
-        </motion.div>
-      </section>
-
-      <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-[1600px] w-full px-6 py-10 border-x border-t border-foreground/5 overflow-hidden"
-      >
-        <div className="w-full aspect-video lg:h-[800px] border border-foreground/10 relative group bg-foreground/5">
-          <div className="absolute inset-0 bg-accent/5 pointer-events-none z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-          <iframe
-            src="https://luma.com/embed/calendar/cal-zMvRPq81i5pG0LL/events"
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            allowFullScreen
-            className="relative z-0"
-          />
-
-          {/* Live API Connection removed as per user request */}
+    <main className="min-h-screen bg-background pt-32 pb-20">
+      <div className="max-w-[1600px] mx-auto px-6">
+        {/* Header */}
+        <div className="mb-20 max-w-4xl">
+          <span className="text-sm font-black uppercase tracking-[0.3em] text-accent block mb-6">
+            Section 03 / Schedule
+          </span>
+          <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter text-foreground uppercase">
+            Upcoming <br />Sessions
+          </h1>
         </div>
-      </motion.section>
 
-      <section className="max-w-[1600px] w-full px-6 py-40 border-x border-t border-foreground/5 bg-accent text-white flex flex-col items-center text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-8 leading-none">NEVER MISS A <br />FOUNDATIONAL SESSION</h2>
-          <p className="text-white/70 max-w-xl mx-auto mb-12 font-bold text-lg">
-            Subscribe to the TTA Luma calendar to receive automated reminders and secure your slot for upcoming masterclasses.
+        {/* Events Grid */}
+        {events.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        ) : (
+          <div className="py-20 text-center border border-dashed border-foreground/20 rounded-lg">
+            <p className="text-xl font-bold uppercase tracking-widest text-foreground/40">
+              No upcoming sessions scheduled.
+            </p>
+            <p className="mt-2 text-foreground/30">Check back later or join the community for updates.</p>
+          </div>
+        )}
+
+        {/* Newsletter / CTA Section */}
+        <div className="mt-40 border-t border-foreground/10 pt-20 text-center">
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-6">
+            Never Miss a Session
+          </h2>
+          <p className="text-foreground/60 max-w-lg mx-auto mb-10 text-lg">
+            Join our community to get notified about new masterclasses and workshops before they go public.
           </p>
-          <a href="https://luma.com/calendar/cal-zMvRPq81i5pG0LL" target="_blank" className="bg-foreground text-background px-16 py-6 font-black uppercase tracking-widest hover:scale-105 transition-all inline-block hover:shadow-[0_0_30px_rgba(232,93,63,0.3)]">
-            Subscribe Now
+          <a href="/join" className="btn-primary inline-flex">
+            Join Community
           </a>
-        </motion.div>
-      </section>
-    </div>
+        </div>
+      </div>
+    </main>
   );
 }

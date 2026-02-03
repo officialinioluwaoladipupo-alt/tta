@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Send, Globe, Instagram, Twitter } from "lucide-react";
 
-export default function Footer({ settings }: { settings?: any }) {
+export default function Footer({ settings }: { settings?: Record<string, unknown> }) {
   const siteName = settings?.siteName || "THE THINKING ARCHITECT";
   const footerMarqueeText = settings?.footerMarqueeText || settings?.siteName || "TTA";
   return (

@@ -88,6 +88,7 @@ export default function Header({ highlights = [], settings }: Props) {
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="lg:hidden text-foreground p-2"
+                aria-label={isOpen ? "Close menu" : "Open menu"}
               >
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
               </button>

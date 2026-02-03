@@ -1,0 +1,83 @@
+{
+    "name": "TTA - Event Registration Automation",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "event-registration",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                300
+            ],
+            "id": "webhook-id"
+        },
+        {
+            "parameters": {
+                "calendarId": "primary",
+                "start": "={{$json[\"eventDate\"]}}",
+                "end": "={{$json[\"eventEndDate\"]}}",
+                "summary": "={{$json[\"eventTitle\"]}} (TTA)",
+                "attendees": [
+                    "={{$json[\"email\"]}}"
+                ],
+                "sendUpdates": "all"
+            },
+            "name": "Create Calendar Invite",
+            "type": "n8n-nodes-base.googleCalendar",
+            "typeVersion": 1,
+            "position": [
+                350,
+                300
+            ],
+            "id": "calendar-id"
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "email": "={{$node[\"Webhook\"].json[\"email\"]}}",
+                "subject": "Registration Confirmed: {{$node[\"Webhook\"].json[\"eventTitle\"]}}",
+                "message": "Hi {{$node[\"Webhook\"].json[\"name\"]}}, you are registered for {{$node[\"Webhook\"].json[\"eventTitle\"]}}! Check your calendar for the invite link.",
+                "appendAttributions": false
+            },
+            "name": "Send Confirmation Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                600,
+                300
+            ],
+            "id": "email-id"
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Create Calendar Invite",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Calendar Invite": {
+            "main": [
+                [
+                    {
+                        "node": "Send Confirmation Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {}
+}

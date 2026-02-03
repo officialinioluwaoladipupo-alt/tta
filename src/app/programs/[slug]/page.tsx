@@ -110,7 +110,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="p-10 border border-foreground/10 flex flex-col gap-6">
               <h3 className="text-2xl font-black uppercase tracking-tighter">Registration</h3>
               <p className="text-foreground/60 text-sm">
-                This program is currently in "{program.status}" status. Please secure your spot early as seats are limited to 50 practitioners.
+                This program is currently in &quot;{program.status}&quot; status. Please secure your spot early as seats are limited to 50 practitioners.
               </p>
               <button className="btn-primary w-full justify-center">Secure Your Spot</button>
             </div>

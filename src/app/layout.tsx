@@ -32,8 +32,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getGlobalSettings();
 
   const siteName = settings?.siteName || "The Thinking Architect";
-  const title = settings?.defaultSeoTitle || "The Thinking Architect | TTA";
-  const description = settings?.defaultSeoDescription || "An authority signal and gateway to TTA platforms. Calm, Intentional, Durable.";
+  const title = settings?.siteName || "The Thinking Architect | TTA";
+  const description = settings?.siteDescription || "An authority signal and gateway to TTA platforms. Calm, Intentional, Durable.";
   const ogImage = settings?.defaultSeoImage || "https://tta.foundation/og.png";
 
   return {
