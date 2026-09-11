@@ -1,80 +1,35 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { auth0 } from "@/lib/auth0";
 
 export async function middleware(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    });
-
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return request.cookies.get(name)?.value;
-                },
-                set(name: string, value: string, options: CookieOptions) {
-                    request.cookies.set({
-                        name,
-                        value,
-                        ...options,
-                    });
-                    response = NextResponse.next({
-                        request: {
-                            headers: request.headers,
-                        },
-                    });
-                    response.cookies.set({
-                        name,
-                        value,
-                        ...options,
-                    });
-                },
-                remove(name: string, options: CookieOptions) {
-                    request.cookies.set({
-                        name,
-                        value: "",
-                        ...options,
-                    });
-                    response = NextResponse.next({
-                        request: {
-                            headers: request.headers,
-                        },
-                    });
-                    response.cookies.set({
-                        name,
-                        value: "",
-                        ...options,
-                    });
-                },
-            },
-        }
+    const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+    const hasAuthConfig = Boolean(
+        process.env.AUTH0_DOMAIN &&
+        process.env.AUTH0_CLIENT_ID &&
+        process.env.AUTH0_SECRET &&
+        (process.env.AUTH0_CLIENT_SECRET || process.env.AUTH0_CLIENT_ASSERTION_SIGNING_KEY)
     );
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-
-    // Protect the dashboard route
-    if (request.nextUrl.pathname.startsWith("/dashboard")) {
-        if (!user) {
-            return NextResponse.redirect(new URL("/login", request.url));
+    if (!hasAuthConfig) {
+        if (isDashboard) {
+            return NextResponse.json({ error: "Auth0 is not configured" }, { status: 503 });
         }
+        return NextResponse.next();
     }
 
-    // Redirect from login if already authenticated
-    if (request.nextUrl.pathname.startsWith("/login")) {
-        if (user) {
-            return NextResponse.redirect(new URL("/dashboard", request.url));
+    try {
+        const response = await auth0.middleware(request);
+        if (isDashboard) {
+            const session = await auth0.getSession(request);
+            if (!session) return NextResponse.redirect(new URL("/auth/login", request.url));
         }
+        return response;
+    } catch (error) {
+        console.error("Auth0 middleware configuration error", error);
+        return isDashboard
+            ? NextResponse.json({ error: "Authentication service unavailable" }, { status: 503 })
+            : NextResponse.next();
     }
-
-    return response;
 }
 
-export const config = {
-    matcher: ["/dashboard/:path*", "/login"],
-};
+export const config = { matcher: ["/auth/:path*", "/dashboard/:path*"] };

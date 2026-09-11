@@ -157,12 +157,16 @@ export default async function EventPage({ params }: Props) {
                     {/* Right Sidebar: Registration - Sticky */}
                     <div className="lg:col-span-4 lg:relative">
                         <div className="lg:sticky lg:top-32">
-                            <EventRegistrationForm
-                                eventId={event.id}
-                                eventTitle={event.title}
-                                eventDate={event.date}
-                                customFields={event.formFields}
-                            />
+                            {event.link ? (
+                                <a href={event.link} target="_blank" rel="noreferrer" className="btn-primary w-full justify-center">Reserve Your Spot →</a>
+                            ) : (
+                                <EventRegistrationForm
+                                    eventId={event.id}
+                                    eventTitle={event.title}
+                                    eventDate={event.date}
+                                    customFields={event.formFields}
+                                />
+                            )}
                         </div>
                     </div>
 

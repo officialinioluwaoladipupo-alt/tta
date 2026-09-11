@@ -212,8 +212,7 @@ export async function searchVideos(query: string): Promise<Video[]> {
 
 export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, pageToken?: string): Promise<PaginatedResult<Video>> {
   if (!API_KEY || playlistId.includes("xxxx")) {
-    console.log("[YouTube] Using Mock Data (No API Key or Invalid Playlist)");
-    return { items: MOCK_VIDEOS };
+    return { items: [] };
   }
 
   try {
@@ -226,7 +225,7 @@ export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, 
     if (!res.ok) throw new Error(`Playlist Fetch Failed: ${res.status}`);
 
     const playlistData = await res.json();
-    if (!playlistData.items || playlistData.items.length === 0) return { items: MOCK_VIDEOS };
+    if (!playlistData.items || playlistData.items.length === 0) return { items: [] };
 
     const videoIds = playlistData.items.map((item: any) => item.snippet.resourceId.videoId).join(',');
 
@@ -239,7 +238,7 @@ export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, 
     const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds}&key=${API_KEY}`;
     const detailsRes = await fetch(detailsUrl, { next: { revalidate: 3600 } });
 
-    let detailsMap = new Map();
+    const detailsMap = new Map();
     if (detailsRes.ok) {
       const detailsData = await detailsRes.json();
       detailsData.items.forEach((item: any) => detailsMap.set(item.id, item));
@@ -273,7 +272,7 @@ export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, 
 
   } catch (error) {
     console.error("YouTube Fetch Error:", error);
-    return { items: MOCK_VIDEOS };
+    return { items: [] };
   }
 }
 

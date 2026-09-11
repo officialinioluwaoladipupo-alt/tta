@@ -27,7 +27,7 @@ export default function ProgramsFooter() {
          <p className="text-foreground/40 mb-10 leading-relaxed">
            Certain intensives require community verification. Join the TTA Telegram to initiate the onboarding process.
          </p>
-         <Link href="https://t.me/thethinkingarchitect" className="btn-outline px-12 transition-colors">
+         <Link href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" className="btn-outline px-12 transition-colors">
             Inquire via Hub
          </Link>
        </motion.div>

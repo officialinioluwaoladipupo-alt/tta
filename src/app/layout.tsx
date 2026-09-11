@@ -93,7 +93,7 @@ export default async function RootLayout({
               {children}
             </PageTransition>
           </main>
-          <Footer settings={settings} />
+          <Footer settings={settings ?? undefined} />
         </SmoothScroll>
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import GlitchText from "@/components/ui/GlitchText";
+import TeamSection from "@/components/about/TeamSection";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -153,6 +154,7 @@ export default function About() {
           </motion.div>
         </div>
       </section>
+      <TeamSection />
     </div>
   );
 }

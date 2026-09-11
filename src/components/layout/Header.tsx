@@ -6,10 +6,13 @@ import { useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
 const navLinks = [
-  { name: "Media", href: "/media" },
-  { name: "Sessions", href: "/events" },
+  { name: "Home", href: "/" },
   { name: "About", href: "/about" },
-  { name: "Tickets", href: "https://t.me/thethinkingarchitect" },
+  { name: "Think Sessions", href: "/events" },
+  { name: "Media", href: "/media" },
+  { name: "Community", href: "/community" },
+  { name: "Get Involved", href: "/join" },
+  { name: "Contact", href: "/contact" },
 ];
 
 import { CommunityHighlight } from "@/lib/community-data";
@@ -85,6 +88,7 @@ export default function Header({ highlights = [], settings }: Props) {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex items-center gap-4"
             >
+              <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="hidden lg:inline-flex btn-primary">Join the Community <span aria-hidden="true">→</span></a>
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="lg:hidden text-foreground p-2"
@@ -128,8 +132,7 @@ export default function Header({ highlights = [], settings }: Props) {
                 </motion.div>
               ))}
               <div className="flex flex-col gap-4 mt-8">
-                <Link href="/events" className="btn-primary justify-center" onClick={() => setIsOpen(false)}>Join Sessions</Link>
-                <Link href="https://t.me/tta_community" className="btn-outline justify-center" onClick={() => setIsOpen(false)}>Telegram</Link>
+                <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="btn-primary justify-center" onClick={() => setIsOpen(false)}>Join the Community</a>
               </div>
             </div>
           </motion.div>

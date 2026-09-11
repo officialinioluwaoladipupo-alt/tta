@@ -101,74 +101,9 @@ export const EVENT_REGISTRY: Event[] = [
     }
 ];
 
-// 6. Async Data Fetching (Airtable Integration)
+// 6. Async Data Fetching (local registry)
 export async function fetchEventsForProgram(programSlug: string): Promise<Event[]> {
-  const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-  const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-  const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME || "Events";
-
-  // Scenario A: Use Airtable if Configured
-  if (AIRTABLE_API_KEY && AIRTABLE_BASE_ID) {
-     try {
-       return await fetchEventsFromAirtable(programSlug, AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME);
-     } catch (error) {
-       console.error("Airtable Fetch Failed, falling back to local:", error);
-       // Fallback to local on error
-     }
-  }
-
-  // Scenario B: Fallback to Local Registry
   return getEventsForProgram(programSlug);
-}
-
-interface AirtableRecord {
-    id: string;
-    fields: {
-        Title?: string;
-        Description?: string;
-        "Start Date"?: string;
-        "End Date"?: string;
-        Link?: string;
-        Type?: string;
-        Focus?: string;
-    };
-}
-
-async function fetchEventsFromAirtable(programSlug: string, apiKey: string, baseId: string, tableName: string): Promise<Event[]> {
-    const url = `https://api.airtable.com/v0/${baseId}/${tableName}`;
-    
-    // Fetch from Airtable (Revalidate every hour)
-    const res = await fetch(url, { 
-        headers: { Authorization: `Bearer ${apiKey}` },
-        next: { revalidate: 3600 } 
-    });
-
-    if (!res.ok) throw new Error(`Airtable Error: ${res.statusText}`);
-
-    const data = await res.json();
-    
-    // Map Airtable Records to our Event Interface
-    const events = (data.records as AirtableRecord[]).map((record) => {
-        const fields = record.fields;
-        return {
-            id: record.id,
-            title: fields.Title || "Untitled Event",
-            description: fields.Description || "",
-            startDate: fields["Start Date"] ? new Date(fields["Start Date"]) : new Date(),
-            endDate: fields["End Date"] ? new Date(fields["End Date"]) : new Date(),
-            link: fields.Link || "#",
-            type: fields.Type,
-            focus: fields.Focus,
-            // We simulate the 'programs' array by reusing the mapper logic on the description
-            // This ensures markers like [program: locked-in-2026] still work even from Airtable
-        } as Event;
-    });
-
-    // Filter using the same Shared Logic
-    return events.filter((event: Event) => {
-        const matches = mapEventToPrograms(event);
-        return matches.some(p => p.slug === programSlug);
-    }).sort((a: Event, b: Event) => a.startDate.getTime() - b.startDate.getTime());
 }
 
 // Keep the synchronous version for local fallback

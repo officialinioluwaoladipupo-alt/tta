@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Upload, X, ImageIcon, Loader2 } from "lucide-react";
 import { uploadImage } from "@/lib/cms-actions";
+import Image from "next/image";
 
 interface Props {
     onUploadComplete: (url: string) => void;
@@ -62,7 +63,7 @@ export default function ImageUpload({ onUploadComplete, currentImage, label }: P
             >
                 {preview ? (
                     <>
-                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                        <Image src={preview} alt="Preview" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <Upload className="text-white" size={24} />
                         </div>

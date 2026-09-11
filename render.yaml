@@ -10,13 +10,23 @@ services:
         value: 20.10.0
       - key: NODE_ENV
         value: production
-      - key: AIRTABLE_API_KEY
-        sync: false
-      - key: AIRTABLE_BASE_ID
-        sync: false
       - key: YOUTUBE_API_KEY
         sync: false
-      - key: NEXT_PUBLIC_N8N_COMMUNITY_WEBHOOK
+      - key: DATABASE_URL
         sync: false
-      - key: NEXT_PUBLIC_N8N_EVENT_WEBHOOK
+      - key: AUTH0_DOMAIN
+        sync: false
+      - key: AUTH0_CLIENT_ID
+        sync: false
+      - key: AUTH0_CLIENT_SECRET
+        sync: false
+      - key: AUTH0_SECRET
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
         sync: false

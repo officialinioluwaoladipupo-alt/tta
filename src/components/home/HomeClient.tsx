@@ -7,6 +7,7 @@ import GlitchText from "@/components/ui/GlitchText";
 import Marquee from "@/components/ui/Marquee";
 import { Asterisk, WavePattern, DottedLine } from "@/components/ui/DecorativeGraphics";
 import JoinCommunityButton from "@/components/ui/JoinCommunityButton";
+import { Event } from "@/lib/event-data";
 
 import { CommunityHighlight } from "@/lib/community-data";
 import CommunityTicker from "@/components/community/CommunityTicker";
@@ -27,7 +28,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
-export default function HomeClient({ marqueeText, highlights = [] }: { marqueeText: string, highlights?: CommunityHighlight[] }) {
+export default function HomeClient({ marqueeText, highlights = [], upcomingEvents = [] }: { marqueeText: string, highlights?: CommunityHighlight[], upcomingEvents?: Event[] }) {
   const currentYear = new Date().getFullYear().toString();
   const processedMarquee = marqueeText.replace(/<CurrentYear \/>/g, currentYear);
 
@@ -70,7 +71,7 @@ export default function HomeClient({ marqueeText, highlights = [] }: { marqueeTe
           <motion.div variants={itemVariants}>
             <GlitchText
               as="h1"
-              text="THE THINKING ARCHITECT"
+              text="ARCHITECTURAL THINKING, BUILT TO LAST."
               className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black leading-[0.85] mb-8 tracking-tighter text-foreground"
             />
           </motion.div>
@@ -79,25 +80,25 @@ export default function HomeClient({ marqueeText, highlights = [] }: { marqueeTe
             variants={itemVariants}
             className="text-xl md:text-2xl text-foreground/60 max-w-2xl mb-6 font-medium tracking-tight"
           >
-            Talks, sessions, and programs for architects building clarity beyond school and durability in practice.
+            The Thinking Architect is a community for architects and architecture students who want more than a degree: real conversations, real mentorship, and the judgment that carries a practice past school and past trends.
           </motion.p>
 
           <motion.p
             variants={itemVariants}
             className="text-lg text-foreground/50 max-w-2xl mb-12"
           >
-            A global platform hosting architectural conversations, learning sessions, and long-term programs for architects navigating education, practice, and professional identity.
+            Built by architects, for architects.
           </motion.p>
 
           <motion.div
             variants={itemVariants}
             className="flex flex-col sm:flex-row gap-6 mb-16"
           >
-            <Link href="/events" className="btn-primary text-xl px-12 py-5 group">
-              Secure Sessions <ArrowRight className="group-hover:translate-x-1 transition-transform" size={24} />
+            <Link href="/join" className="btn-primary text-xl px-12 py-5 group">
+              Join the Community <ArrowRight className="group-hover:translate-x-1 transition-transform" size={24} />
             </Link>
-            <Link href="/programs" className="btn-outline text-xl px-12 py-5">
-              View Programs
+            <Link href="/events" className="btn-outline text-xl px-12 py-5">
+              See Upcoming Think Session
             </Link>
           </motion.div>
         </motion.div>
@@ -134,6 +135,24 @@ export default function HomeClient({ marqueeText, highlights = [] }: { marqueeTe
         <Marquee text={processedMarquee} className="bg-accent/5 text-accent border-y border-accent/10" repeat={4} speed={40} />
       </motion.div>
 
+      <section className="max-w-[1600px] mx-auto w-full px-6 py-20 lg:py-32 border-x border-foreground/5">
+        <div className="grid gap-8 lg:grid-cols-[0.35fr_1fr] items-start">
+          <p className="text-[11px] font-black uppercase tracking-widest text-accent">Up Next</p>
+          <div className="relative flex flex-col gap-6 border border-foreground/10 bg-foreground/[0.03] p-8 md:p-12 lg:p-16 shadow-[8px_8px_0_var(--accent)]">
+          {upcomingEvents[0] ? (
+            <>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase">{upcomingEvents[0].title}</h2>
+              <p className="text-lg text-foreground/60">{upcomingEvents[0].speakers?.map((speaker) => speaker.name).join(", ") || "Think Sessions"} · {upcomingEvents[0].displayDate}</p>
+              <p className="max-w-2xl text-foreground/70">{upcomingEvents[0].shortDescription || upcomingEvents[0].description}</p>
+              <a href={upcomingEvents[0].link || `/events/${upcomingEvents[0].slug}`} target={upcomingEvents[0].link ? "_blank" : undefined} rel={upcomingEvents[0].link ? "noreferrer" : undefined} className="btn-primary self-start">Reserve Your Spot <ArrowRight size={18} /></a>
+            </>
+          ) : (
+            <p className="text-2xl font-bold tracking-tight">No session scheduled yet, check back soon.</p>
+          )}
+          </div>
+        </div>
+      </section>
+
       {/* Focus Area Grid */}
       <section className="max-w-[1600px] mx-auto w-full px-6 py-20 lg:py-40 border-x border-foreground/5">
         <motion.div
@@ -145,35 +164,13 @@ export default function HomeClient({ marqueeText, highlights = [] }: { marqueeTe
         >
           <FocusCard
             number="01"
-            title="Strategic Discourse"
-            description="Live and recorded architectural talks that interrogate real practice — systems, decisions, mistakes, and long-term thinking beyond theory."
+            title="Think Sessions"
+            description="Monthly conversations with architects and professionals who've built careers on more than a portfolio."
           />
           <FocusCard
             number="02"
-            title="Foundational Logic"
-            description="Sessions and programs focused on the principles that shape strong architectural judgment, clear design thinking, and professional consistency."
-          />
-          <FocusCard
-            number="03"
-            title="Operational Agility"
-            description="Practical conversations and learning experiences addressing how architects work in today’s landscape — from workflow and systems to adaptability in 2026 and beyond."
-            highlight
-          />
-          <FocusCard
-            number="04"
-            title="Community Hub"
-            description="A private, structured Telegram community for architects and students to ask questions, share insights, and learn directly from ongoing TTA sessions and programs."
-          />
-          <FocusCard
-            number="05"
-            title="Media Repository"
-            description="A growing archive of TTA talks, interviews, and long-form conversations available through our media platforms, including YouTube."
-          />
-          <FocusCard
-            border={false}
-            number="06"
-            title="Event Scale"
-            description="Live and virtual architectural sessions — from focused masterclasses to open conversations — scheduled and managed through our integrated event calendar."
+            title="Community"
+            description="A WhatsApp home where architects ask real questions, share real work, and find the people who've been where they are."
           />
         </motion.div>
       </section>
@@ -207,10 +204,10 @@ export default function HomeClient({ marqueeText, highlights = [] }: { marqueeTe
           className="max-w-4xl px-6 relative z-10"
         >
           <h2 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 uppercase leading-none text-foreground">
-            READY TO BUILD YOUR <span className="text-accent underline decoration-4 underline-offset-8">ARCHITECTURAL FOUNDATION?</span>
+            THIS IS BIGGER THAN <span className="text-accent underline decoration-4 underline-offset-8">ONE CONVERSATION.</span>
           </h2>
           <p className="text-xl text-foreground/60 mb-12 max-w-2xl mx-auto font-medium">
-            Join The Thinking Architect and take part in talks, sessions, and programs designed to help you think clearly, practice intentionally, and grow with direction.
+            TTA exists so no architect has to build their thinking alone. Join a community working toward something that outlasts a single career.
           </p>
           <div className="flex justify-center w-full">
             <JoinCommunityButton />

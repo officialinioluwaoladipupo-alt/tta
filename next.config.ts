@@ -19,13 +19,26 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "v5.airtableusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "res.cloudinary.com",
       },
     ],
+  },
+  async headers() {
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const scriptSource = isDevelopment
+      ? "'self' 'unsafe-inline' 'unsafe-eval' https://tally.so"
+      : "'self' 'unsafe-inline' https://tally.so";
+    return [{
+      source: "/(.*)",
+      headers: [
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+        { key: "Content-Security-Policy", value: `default-src 'self'; script-src ${scriptSource}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; frame-src 'self' https://tally.so; object-src 'none'; base-uri 'self'; form-action 'self'` },
+      ],
+    }];
   },
 };
 

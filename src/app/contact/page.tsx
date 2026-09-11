@@ -89,8 +89,8 @@ export default function Contact() {
                <div className="flex flex-col gap-4 text-foreground/60 font-medium">
                  <p className="uppercase text-xs font-bold tracking-widest text-foreground/40 mb-2">TTA operates across the following platforms:</p>
                  <ul className="flex flex-col gap-4">
-                   <PlatformLink name="Telegram" desc="Community discussions and updates" href="https://t.me/thethinkingarchitect" />
-                   <PlatformLink name="Luma" desc="Event listings and registration" href="https://luma.com/calendar/cal-zMvRPq81i5pG0LL" />
+                   <PlatformLink name="WhatsApp" desc="Community discussions and updates" href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" />
+                   <PlatformLink name="LinkedIn" desc="Professional updates and community news" href="https://www.linkedin.com/company/the-thinking-architect/" />
                    <PlatformLink name="YouTube" desc="Recorded talks and sessions" href="https://www.youtube.com/@TheThinkingArchitect-t4p" />
                  </ul>
                  <p className="text-sm italic mt-4 text-foreground/40">Access links are available via the site navigation.</p>

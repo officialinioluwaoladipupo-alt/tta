@@ -2,11 +2,13 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Send, Globe, Instagram, Twitter } from "lucide-react";
+import { Globe, Instagram, Twitter } from "lucide-react";
 
 export default function Footer({ settings }: { settings?: Record<string, unknown> }) {
-  const siteName = settings?.siteName || "THE THINKING ARCHITECT";
-  const footerMarqueeText = settings?.footerMarqueeText || settings?.siteName || "TTA";
+  const siteName = typeof settings?.siteName === "string" ? settings.siteName : "THE THINKING ARCHITECT";
+  const footerMarqueeText = typeof settings?.footerMarqueeText === "string"
+    ? settings.footerMarqueeText
+    : siteName || "TTA";
   return (
     <footer className="bg-background text-foreground relative overflow-hidden border-t border-dark/5">
       <div className="absolute top-10 left-0 w-full opacity-[0.05] select-none pointer-events-none flex whitespace-nowrap overflow-hidden">
@@ -42,46 +44,55 @@ export default function Footer({ settings }: { settings?: Record<string, unknown
             <div className="flex gap-4">
               <SocialIcon icon={<Twitter size={20} />} href="#" />
               <SocialIcon icon={<Instagram size={20} />} href="https://www.instagram.com/_tta.ng/" />
-              <SocialIcon icon={<Send size={20} />} href="https://t.me/thethinkingarchitect" />
+              <SocialIcon icon={<Twitter size={20} />} href="https://x.com/TTA_Africa" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 md:col-span-2 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:col-span-2 gap-10">
             <div className="flex flex-col gap-4">
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/50">Navigation</h3>
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/50">Explore</h3>
               <ul className="flex flex-col gap-2">
-                <FooterLink href="/media">Media</FooterLink>
-                <FooterLink href="/sessions">Sessions</FooterLink>
+                <FooterLink href="/">Home</FooterLink>
                 <FooterLink href="/about">About</FooterLink>
-                <FooterLink href="/tickets">Tickets</FooterLink>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-4">
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/50">Platforms</h3>
-              <ul className="flex flex-col gap-2">
-                <FooterLink href="https://t.me/thethinkingarchitect">Telegram</FooterLink>
-                <FooterLink href="https://luma.com/calendar/cal-zMvRPq81i5pG0LL">Luma</FooterLink>
-                <FooterLink href="https://www.youtube.com/@TheThinkingArchitect-t4p">YouTube</FooterLink>
-                <FooterLink href="https://www.instagram.com/_tta.ng/">Instagram</FooterLink>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-4">
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/50">Foundation</h3>
-              <ul className="flex flex-col gap-2">
+                <FooterLink href="/events">Think Sessions</FooterLink>
+                <FooterLink href="/media">Media</FooterLink>
+                <FooterLink href="/community">Community</FooterLink>
+                <FooterLink href="/join">Get Involved</FooterLink>
                 <FooterLink href="/contact">Contact</FooterLink>
-                <FooterLink href="/privacy">Privacy Policy</FooterLink>
-                <FooterLink href="/terms">Terms of Service</FooterLink>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground/50">Connect</h3>
+              <ul className="flex flex-col gap-2">
+              <FooterLink href="https://www.instagram.com/_tta.ng/">Instagram (@_tta.ng)</FooterLink>
+              <FooterLink href="https://x.com/TTA_Africa">X (@TTA_Africa)</FooterLink>
+              <FooterLink href="https://www.linkedin.com/company/the-thinking-architect/">LinkedIn</FooterLink>
+              <FooterLink href="https://www.youtube.com/@TheThinkingArchitect-t4p">YouTube</FooterLink>
               </ul>
             </div>
           </div>
         </div>
 
+        <div className="mt-20 border-y border-foreground/10 py-10">
+          <p className="text-xl font-bold tracking-tight mb-5">Get Think Session dates and community news first.</p>
+          <form className="flex flex-col sm:flex-row gap-3 max-w-2xl" action="/api/newsletter" method="post">
+            <label htmlFor="footer-newsletter-email" className="sr-only">Email address</label>
+            <input
+              id="footer-newsletter-email"
+              name="email"
+              type="email"
+              required
+              placeholder="Your email address"
+              className="min-h-12 flex-1 border border-foreground/20 bg-transparent px-4 text-sm outline-none focus:border-accent"
+            />
+            <button type="submit" className="btn-primary min-h-12">Subscribe</button>
+          </form>
+        </div>
+
         <div className="mt-40 border-t border-foreground/10 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col gap-1 items-center md:items-start text-[10px] font-black uppercase tracking-widest text-foreground/40">
-            <span>Established January 2026</span>
-            <div className="flex items-center gap-2">
-              <Globe size={14} /> Global Foundation
-            </div>
+              <span>© 2026 The Thinking Architect.</span>
+              <div className="flex items-center gap-2"><Globe size={14} /> Built for architects who take their practice seriously.</div>
           </div>
           <div className="text-center md:text-right">
             <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { COUNTRIES, RESTRICTED_COUNTRIES, JOURNEY_STAGES, REFERRAL_SOURCES } from "@/lib/form-constants";
+import { COUNTRIES, JOURNEY_STAGES, REFERRAL_SOURCES } from "@/lib/form-constants";
 import { Check, MessageCircle, Gamepad2, ArrowRight } from "lucide-react";
 import { saveSubmission } from "@/lib/cms-actions";
 
@@ -66,40 +66,19 @@ export default function CommunityJoinForm({ onClose }: CommunityJoinFormProps = 
         setIsSubmitting(true);
         setErrorStatus(null);
 
-        const isRestricted = RESTRICTED_COUNTRIES.includes(formData.country);
-
         try {
-            // Send to n8n Webhook
-            const webhookUrl = process.env.NEXT_PUBLIC_N8N_COMMUNITY_WEBHOOK;
-
-            if (webhookUrl && webhookUrl !== "YOUR_N8N_COMMUNITY_WEBHOOK_URL") {
-                const response = await fetch(webhookUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        ...formData,
-                        routing: isRestricted ? "DISCORD" : "WHATSAPP",
-                        submittedAt: new Date().toISOString(),
-                    }),
-                });
-
-                if (!response.ok) throw new Error("Webhook failed");
-            } else {
-                console.warn("n8n Webhook URL not set. Simulating n8n success.");
-            }
-
-            // Save to Supabase
+            // Save directly to Neon through the server action.
             await saveSubmission({
                 type: "join",
                 email: formData.email,
                 name: formData.fullName,
                 data: {
                     ...formData,
-                    routing: isRestricted ? "DISCORD" : "WHATSAPP",
+                    routing: "WHATSAPP",
                 }
             });
 
-            setSuccessType(isRestricted ? "DISCORD" : "WHATSAPP");
+            setSuccessType("WHATSAPP");
             window.scrollTo({ top: 0, behavior: "smooth" });
         } catch (err) {
             console.error("Submission error:", err);
@@ -131,7 +110,7 @@ export default function CommunityJoinForm({ onClose }: CommunityJoinFormProps = 
 
     // Success State
     if (successType) {
-        const isDiscord = successType === "DISCORD";
+        const isDiscord = false;
 
         return (
             <div className="w-full flex flex-col items-center justify-center py-12 px-6 text-center animate-fadeIn bg-white border border-foreground/10 shadow-sm">
@@ -146,7 +125,7 @@ export default function CommunityJoinForm({ onClose }: CommunityJoinFormProps = 
                     <p className="text-sm uppercase tracking-widest text-foreground/50 font-bold mb-8">One last step — join the community:</p>
 
                     <a
-                        href={isDiscord ? "https://discord.gg/example" : "https://chat.whatsapp.com/example"}
+                        href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO"
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`w-full btn-primary py-6 text-xl justify-center gap-4 ${isDiscord ? 'bg-[#5865F2] hover:bg-[#4752C4] text-white' : 'bg-[#25D366] hover:bg-[#128C7E] text-white'}`}

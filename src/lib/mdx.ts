@@ -1,8 +1,8 @@
-import { queryAirtable, getAirtableImage } from "./airtable";
+import { queryContent, getImageUrl } from "./content-data";
 
 export async function getGlobalSettings() {
   try {
-    const settings = await queryAirtable("Settings", {
+    const settings = await queryContent("Settings", {
       returnFieldsByFieldId: true
     });
 
@@ -12,20 +12,34 @@ export async function getGlobalSettings() {
         siteName: s.fldJHiVrjfL3BeX4E as string,
         siteDescription: s.fldmQGL4x54GUT8sB as string,
         marqueeText: s.fldzwzjC7K5TwNIq7 as string,
-        defaultSeoImage: getAirtableImage(s.fldrq35F3RQmlo9E6)
+        defaultSeoImage: getImageUrl(s.fldrq35F3RQmlo9E6)
       };
     }
-  } catch (error) {
-    console.warn("[Airtable] Failed to fetch global settings");
+  } catch {
+    console.warn("[Content] Failed to fetch global settings");
   }
-  return null;
+  return {
+    siteName: "The Thinking Architect",
+    siteDescription: "An authority signal and gateway to TTA platforms. Calm, Intentional, Durable.",
+    marqueeText: "THE THINKING ARCHITECT",
+    defaultSeoImage: undefined,
+  };
 }
 
 export async function getAllPrograms() {
-  const records = await queryAirtable("tblHShOUifU1m6EkS", {
+  const records = await queryContent("programs", {
     sort: [{ field: "fldJGpX7Oj9ElKfAi", direction: "asc" }], // Sort by Title ID
     returnFieldsByFieldId: true
   });
+
+  if (records.length === 0) return [{
+    slug: "locked-in-2026",
+    title: "Locked-IN 2026",
+    label: "Program",
+    status: "active",
+    featured: true,
+    description: "A structured program for architects navigating the transition from education to practice.",
+  }];
 
   return records.map((record: any) => ({
     slug: record.fldposSLgP7UKY3oU,
@@ -34,15 +48,15 @@ export async function getAllPrograms() {
     status: record.fldger01xzPMYfiZh,
     featured: record.fldkKaRGFxoAhK2j6,
     description: record.fldYzRVAc6wWZayWE,
-    image: getAirtableImage(record.fldmfK9ySWvpVCPE8),
+    image: getImageUrl(record.fldmfK9ySWvpVCPE8),
     seoTitle: record.fldfEd5BB5ShohfnS,
     seoDescription: record.fldB2tqhZErMqcTUr,
-    seoImage: getAirtableImage(record.fldg9Eg7AHrksMmMp)
+    seoImage: getImageUrl(record.fldg9Eg7AHrksMmMp)
   }));
 }
 
 export async function getProgramBySlug(slug: string) {
-  const records = await queryAirtable("tblHShOUifU1m6EkS", {
+  const records = await queryContent("programs", {
     returnFieldsByFieldId: true
   });
 
@@ -57,9 +71,9 @@ export async function getProgramBySlug(slug: string) {
     featured: record.fldkKaRGFxoAhK2j6,
     description: record.fldYzRVAc6wWZayWE,
     content: record.fldtM2lAoLIlotb5H,
-    image: getAirtableImage(record.fldmfK9ySWvpVCPE8),
+    image: getImageUrl(record.fldmfK9ySWvpVCPE8),
     seoTitle: record.fldfEd5BB5ShohfnS,
     seoDescription: record.fldB2tqhZErMqcTUr,
-    seoImage: getAirtableImage(record.fldg9Eg7AHrksMmMp)
+    seoImage: getImageUrl(record.fldg9Eg7AHrksMmMp)
   };
 }

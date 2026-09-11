@@ -56,9 +56,9 @@ export default function MediaGrid({ initialVideos, initialNextToken, playlistId 
     return (
       <div className="flex flex-col items-center justify-center py-40 opacity-50">
         <div className="w-16 h-1 bg-accent mb-8 animate-pulse" />
-        <h3 className="text-2xl font-black uppercase tracking-widest text-foreground">Signal Lost</h3>
+        <h3 className="text-2xl font-black uppercase tracking-widest text-foreground">Videos coming soon.</h3>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/40 mt-2">
-          No matching records located.
+          Check back soon for new recordings and talks.
         </p>
       </div>
     );

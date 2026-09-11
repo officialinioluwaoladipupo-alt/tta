@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase-client";
-import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, ShieldAlert } from "lucide-react";
 
 export default function LoginPage() {
@@ -10,25 +8,14 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-        } else {
-            // Use window.location for a full reload to ensure middleware catches the new session cookie
-            window.location.href = "/dashboard";
-        }
+        if (!email || !password) return;
+        window.location.href = "/auth/login";
     };
 
     return (

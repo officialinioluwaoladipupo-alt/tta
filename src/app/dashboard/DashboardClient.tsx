@@ -1,37 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { Users, PlusCircle, Sparkles, Download, Calendar, LogOut, Trash2, Edit3 } from "lucide-react";
-import { supabase } from "@/lib/supabase-client";
+import { Users, PlusCircle, Sparkles, Download, Calendar, LogOut, Trash2, Edit3, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import {
-    createAirtableEvent,
-    updateAirtableEvent,
-    deleteAirtableEvent,
-    createAirtableHighlight,
-    updateAirtableHighlight,
-    deleteAirtableHighlight
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    createHighlight,
+    updateHighlight,
+    deleteHighlight
+    , updateSettings
 } from "@/lib/cms-actions";
 import ImageUpload from "@/components/dashboard/ImageUpload";
 import {
-    AirtableRecord,
-    AirtableEventFields,
-    AirtableHighlightFields,
+    ContentRecord,
+    EventFields,
+    HighlightFields,
     EventFormData,
     HighlightFormData
 } from "@/lib/cms-types";
 
 // Helper type for union of record types
-type DashboardRecord = AirtableRecord<AirtableEventFields> | AirtableRecord<AirtableHighlightFields>;
+type DashboardRecord = ContentRecord<EventFields> | ContentRecord<HighlightFields>;
 
 interface Props {
-    initialSubmissions: Record<string, unknown>[]; // Submissions are from Supabase
-    initialEvents: AirtableRecord<AirtableEventFields>[];
-    initialHighlights: AirtableRecord<AirtableHighlightFields>[];
+    initialSubmissions: Submission[]; // Submissions are stored in Neon
+    initialEvents: ContentRecord<EventFields>[];
+    initialHighlights: ContentRecord<HighlightFields>[];
+    initialSettings?: Record<string, unknown>;
 }
 
-export default function DashboardClient({ initialSubmissions, initialEvents, initialHighlights }: Props) {
-    const [activeTab, setActiveTab] = useState<"submissions" | "events" | "highlights">("submissions");
+interface Submission {
+    id: string;
+    created_at: string;
+    type: string;
+    name: string;
+    email: string;
+    data: unknown;
+}
+
+export default function DashboardClient({ initialSubmissions, initialEvents, initialHighlights, initialSettings }: Props) {
+    const [activeTab, setActiveTab] = useState<"submissions" | "events" | "highlights" | "settings">("submissions");
     const [view, setView] = useState<"list" | "create" | "edit">("list");
     const [editingRecord, setEditingRecord] = useState<DashboardRecord | null>(null);
     const [loading, setLoading] = useState(false);
@@ -41,17 +53,15 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
     const router = useRouter();
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push("/login");
-        router.refresh();
+        window.location.href = "/auth/logout";
     };
 
     const handleEdit = (record: DashboardRecord) => {
         setEditingRecord(record);
         // Pull the image URL from either the Event field ID or the Highlight field ID
         // Determine type by checking for fields unique to events or highlights, or just try access both
-        const evt = record as AirtableRecord<AirtableEventFields>;
-        const hlt = record as AirtableRecord<AirtableHighlightFields>;
+        const evt = record as ContentRecord<EventFields>;
+        const hlt = record as ContentRecord<HighlightFields>;
 
         const imgVal = evt.fldC3VHA5QJfiLh9W || hlt.fld7Bc63XfnJ2rtNV;
         const imgUrl = (imgVal && imgVal.length > 0) ? imgVal[0].url : null;
@@ -67,9 +77,10 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
     };
 
     const exportToCSV = () => {
-        if (initialSubmissions.length === 0) return;
+        const newsletterSubscribers = initialSubmissions.filter((sub) => sub.type === "newsletter");
+        if (newsletterSubscribers.length === 0) return;
         const headers = ["ID", "Created At", "Type", "Name", "Email", "Data"];
-        const rows = initialSubmissions.map(sub => [
+        const rows = newsletterSubscribers.map(sub => [
             sub.id,
             sub.created_at,
             sub.type,
@@ -82,7 +93,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `tta_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute("download", `tta_newsletter_${new Date().toISOString().split('T')[0]}.csv`);
         link.click();
     };
 
@@ -114,6 +125,15 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                 >
                                     <Sparkles size={16} /> Live Highlights
                                 </button>
+                                <button
+                                    onClick={() => { setActiveTab("settings"); setView("edit"); }}
+                                    className={`flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'settings' ? 'bg-accent text-black' : 'hover:bg-foreground/5 text-foreground/60'}`}
+                                >
+                                    <Settings size={16} /> Global Settings
+                                </button>
+                                <Link href="/dashboard/team" className="flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-foreground/5 text-foreground/60">
+                                    <Users size={16} /> Manage Team
+                                </Link>
                             </nav>
                         </div>
                     </div>
@@ -136,16 +156,17 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                 {activeTab === 'submissions' && "Submissions"}
                                 {activeTab === 'events' && "Events"}
                                 {activeTab === 'highlights' && "Highlights"}
+                                {activeTab === 'settings' && "Global Settings"}
                             </h2>
                         </div>
 
                         <div className="flex gap-4">
                             {activeTab === 'submissions' && (
                                 <button onClick={exportToCSV} className="bg-foreground text-background px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-accent hover:text-black transition-all">
-                                    <Download size={14} /> Export CSV
+                                    <Download size={14} /> Export Newsletter CSV
                                 </button>
                             )}
-                            {activeTab !== 'submissions' && view === 'list' && (
+                            {activeTab !== 'submissions' && activeTab !== 'settings' && view === 'list' && (
                                 <button onClick={handleCreate} className="bg-accent text-black px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:scale-105 transition-all">
                                     <PlusCircle size={14} /> Create New
                                 </button>
@@ -200,8 +221,8 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                             <div className="grid grid-cols-1 gap-4">
                                 {(activeTab === 'events' ? initialEvents : initialHighlights).map((item) => {
                                     // Cast for access in map
-                                    const evt = item as AirtableRecord<AirtableEventFields>;
-                                    const hlt = item as AirtableRecord<AirtableHighlightFields>;
+                                    const evt = item as ContentRecord<EventFields>;
+                                    const hlt = item as ContentRecord<HighlightFields>;
                                     const image = (evt.fldC3VHA5QJfiLh9W && evt.fldC3VHA5QJfiLh9W.length > 0) ? evt.fldC3VHA5QJfiLh9W[0].url :
                                         ((hlt.fld7Bc63XfnJ2rtNV && hlt.fld7Bc63XfnJ2rtNV.length > 0) ? hlt.fld7Bc63XfnJ2rtNV[0].url : null);
 
@@ -217,7 +238,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                             <div className="flex items-center gap-6">
                                                 {image ? (
                                                     <div className="w-16 h-16 bg-foreground/10 overflow-hidden border border-foreground/10">
-                                                        <img src={image} className="w-full h-full object-cover" alt="" />
+                                                <Image src={image} fill sizes="120px" className="object-cover" alt="" />
                                                     </div>
                                                 ) : null}
                                                 <div>
@@ -237,7 +258,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                     onClick={async () => {
                                                         if (!confirm("Are you sure? This is permanent.")) return;
                                                         setLoading(true);
-                                                        const res = activeTab === 'events' ? await deleteAirtableEvent(item.id) : await deleteAirtableHighlight(item.id);
+                                                        const res = activeTab === 'events' ? await deleteEvent(item.id) : await deleteHighlight(item.id);
                                                         if (res.success) {
                                                             setMessage({ type: "success", text: "Record obliterated." });
                                                             router.refresh();
@@ -255,8 +276,25 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                             </div>
                         )}
 
+                        {activeTab === 'settings' && (
+                            <form action={async (formData) => {
+                                setLoading(true); setMessage(null);
+                                const result = await updateSettings(Object.fromEntries(formData));
+                                setMessage(result.success ? { type: "success", text: "Global settings synchronized." } : { type: "error", text: result.error || "Settings update failed." });
+                                setLoading(false);
+                            }} className="max-w-3xl grid gap-8">
+                                <label className="grid gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">Site Name<input name="siteName" defaultValue={String(initialSettings?.siteName || "The Thinking Architect")} className="text-base normal-case tracking-normal opacity-100 bg-foreground/[0.03] border border-foreground/10 p-5" required /></label>
+                                <label className="grid gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">Site Description<textarea name="siteDescription" defaultValue={String(initialSettings?.siteDescription || "")} rows={3} className="text-base normal-case tracking-normal opacity-100 bg-foreground/[0.03] border border-foreground/10 p-5" /></label>
+                                <label className="grid gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">Homepage Marquee<textarea name="marqueeText" defaultValue={String(initialSettings?.marqueeText || "THE THINKING ARCHITECT // JOIN THE COMMUNITY")} rows={4} className="text-base normal-case tracking-normal opacity-100 bg-foreground/[0.03] border border-foreground/10 p-5" required /></label>
+                                <label className="grid gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">Footer Marquee<input name="footerMarqueeText" defaultValue={String(initialSettings?.footerMarqueeText || "TTA")} className="text-base normal-case tracking-normal opacity-100 bg-foreground/[0.03] border border-foreground/10 p-5" required /></label>
+                                <label className="grid gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">SEO Image URL<input name="defaultSeoImage" type="url" defaultValue={String(initialSettings?.defaultSeoImage || "")} className="text-base normal-case tracking-normal opacity-100 bg-foreground/[0.03] border border-foreground/10 p-5" /></label>
+                                <label className="grid gap-3 text-[10px] font-black uppercase tracking-widest opacity-60">Team Members (JSON)<textarea name="teamMembers" defaultValue={String(initialSettings?.teamMembers || '[{"name":"","role":"","bio":"","photo":""}]')} rows={8} className="text-base normal-case tracking-normal opacity-100 bg-foreground/[0.03] border border-foreground/10 p-5 font-mono" /><span className="text-[10px] normal-case tracking-normal opacity-50">Upload each photo to Cloudinary, then use its secure URL in the photo field.</span></label>
+                                <button disabled={loading} className="bg-accent text-black font-black uppercase tracking-widest py-6 px-10">{loading ? "Saving..." : "Save Global Settings"}</button>
+                            </form>
+                        )}
+
                         {/* EDIT / CREATE VIEW */}
-                        {(view === 'create' || view === 'edit') && (
+                        {activeTab !== 'settings' && (view === 'create' || view === 'edit') && (
                             <form
                                 action={async (formData) => {
                                     setLoading(true); setMessage(null);
@@ -267,12 +305,12 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     if (activeTab === 'events') {
                                         // Need to cast the plain object to EventFormData since we can't type check FormData strictly at runtime easily here
                                         res = view === 'edit'
-                                            ? await updateAirtableEvent((editingRecord as AirtableRecord<AirtableEventFields>).id, data as unknown as EventFormData)
-                                            : await createAirtableEvent(data as unknown as EventFormData);
+                                            ? await updateEvent((editingRecord as ContentRecord<EventFields>).id, data as unknown as EventFormData)
+                                            : await createEvent(data as unknown as EventFormData);
                                     } else {
                                         res = view === 'edit'
-                                            ? await updateAirtableHighlight((editingRecord as AirtableRecord<AirtableHighlightFields>).id, data as unknown as HighlightFormData)
-                                            : await createAirtableHighlight(data as unknown as HighlightFormData);
+                                            ? await updateHighlight((editingRecord as ContentRecord<HighlightFields>).id, data as unknown as HighlightFormData)
+                                            : await createHighlight(data as unknown as HighlightFormData);
                                     }
 
                                     if (res.success) {
@@ -291,7 +329,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                         <>
                                             {/* Event Fields */}
                                             {(() => {
-                                                const rec = editingRecord as AirtableRecord<AirtableEventFields> | null;
+                                                const rec = editingRecord as ContentRecord<EventFields> | null;
                                                 return (
                                                     <>
                                                         <div className="flex flex-col gap-3">
@@ -318,7 +356,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                         <>
                                             {/* Highlight Fields */}
                                             {(() => {
-                                                const rec = editingRecord as AirtableRecord<AirtableHighlightFields> | null;
+                                                const rec = editingRecord as ContentRecord<HighlightFields> | null;
                                                 return (
                                                     <>
                                                         <div className="flex flex-col gap-3 col-span-2">
@@ -355,19 +393,19 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     {activeTab === 'events' ? (
                                         <div className="flex flex-col gap-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">External Link</label>
-                                            <input name="link" defaultValue={(editingRecord as AirtableRecord<AirtableEventFields> | null)?.fld6Azz8y9qUZAXSx} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://..." />
+                                            <input name="link" defaultValue={(editingRecord as ContentRecord<EventFields> | null)?.fld6Azz8y9qUZAXSx} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://..." />
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">External Link</label>
-                                            <input name="link" defaultValue={(editingRecord as AirtableRecord<AirtableHighlightFields> | null)?.fldwUq6RZ8GORfYEU} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://..." />
+                                            <input name="link" defaultValue={(editingRecord as ContentRecord<HighlightFields> | null)?.fldwUq6RZ8GORfYEU} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://..." />
                                         </div>
                                     )}
 
                                     {activeTab === 'events' && (
                                         <>
                                             {(() => {
-                                                const rec = editingRecord as AirtableRecord<AirtableEventFields> | null;
+                                                const rec = editingRecord as ContentRecord<EventFields> | null;
                                                 return (
                                                     <>
                                                         <div className="flex flex-col gap-3">
@@ -387,7 +425,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                             <textarea name="description" defaultValue={rec?.flddPxpiutxYsuYzL} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
-                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Speakers (JSON Array)</label>
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Speakers (JSON Array — avatar must be a Cloudinary URL)</label>
                                                             <textarea name="speakers" defaultValue={rec?.fld61jNMCFHDGQ2Nq ? (typeof rec.fld61jNMCFHDGQ2Nq === 'string' ? rec.fld61jNMCFHDGQ2Nq : JSON.stringify(rec.fld61jNMCFHDGQ2Nq, null, 2)) : '[{"name": "", "role": "", "avatar": ""}]'} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground font-mono text-xs focus:outline-none resize-none" />
                                                         </div>
                                                     </>

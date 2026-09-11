@@ -31,12 +31,12 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                 className="max-w-[1600px] w-full px-6 pt-40 pb-20 border-x border-foreground/5"
             >
                 <div className="flex flex-col gap-6 max-w-4xl text-left">
-                    <motion.span variants={itemVariants} className="text-[11px] font-black uppercase tracking-[0.3em] text-accent">Section 05 / Discourse</motion.span>
+                    <motion.span variants={itemVariants} className="text-[11px] font-black uppercase tracking-[0.3em] text-accent">Community</motion.span>
                     <motion.div variants={itemVariants}>
                         <h1 className="flex flex-wrap gap-x-4 md:gap-x-6 text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter text-foreground">
-                            <GlitchText as="span" text="THE" />
-                            <GlitchText as="span" text="TTA" font="font-logo" />
-                            <GlitchText as="span" text="HUB" />
+                            <GlitchText as="span" text="FIND" />
+                            <GlitchText as="span" text="YOUR" font="font-logo" />
+                            <GlitchText as="span" text="PEOPLE" />
                         </h1>
                     </motion.div>
                 </div>
@@ -63,31 +63,32 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                 <motion.div variants={itemVariants} className="flex flex-col gap-8">
                     <h2 className="text-4xl font-black uppercase tracking-tighter text-foreground">Real-time <br /> DISCOURSE</h2>
                     <p className="text-xl text-foreground/50 leading-relaxed font-medium">
-                        The Thinking Architect community primarily lives on encrypted Telegram channels.
-                        This is where rapid resource sharing, case study teardowns, and real-time discourse occur.
+                        Find the people thinking about this the same way you are. TTA&apos;s community lives on WhatsApp, with architects and students working through real questions together, not performing for an audience.
                     </p>
                     <a
-                        href="https://t.me/thethinkingarchitect"
+                        href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO"
+                        target="_blank"
+                        rel="noreferrer"
                         className="btn-primary w-fit px-12 py-5 text-xl"
                     >
-                        Request Access <Send size={24} />
+                        Join the WhatsApp Community <Send size={24} />
                     </a>
                 </motion.div>
                 <motion.div variants={itemVariants} className="grid grid-cols-1 gap-12">
                     <CommunityFeature
                         icon={<Shield size={24} />}
-                        label="Guidelines"
-                        detail="Zero noise policy. High intellectual rigor. Professional exclusivity."
+                        label="First access"
+                        detail="First access to Think Session dates and RSVPs."
                     />
                     <CommunityFeature
                         icon={<Users size={24} />}
-                        label="Onboarding"
-                        detail="Mandatory intro for new practitioners. Identify core practice areas."
+                        label="Real questions"
+                        detail="A space to ask the questions studio critiques never leave room for."
                     />
                     <CommunityFeature
                         icon={<MessageSquare size={24} />}
-                        label="Engagement"
-                        detail="Direct line to program directors and foundational researchers."
+                        label="Direct line"
+                        detail="A direct line to architects further along the path than you."
                     />
                 </motion.div>
             </motion.section>
@@ -101,13 +102,12 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                 className="max-w-[1600px] w-full px-6 py-60 border-x border-t border-foreground/5 flex flex-col items-center justify-center bg-dot-pattern"
             >
                 <motion.div variants={itemVariants} className="text-center">
-                    <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-8 leading-none text-foreground">JOIN THE <br /> DISCOURSE</h2>
+                    <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-8 leading-none text-foreground">FIND YOUR <br /> PEOPLE</h2>
                     <p className="text-foreground/40 max-w-xl mx-auto mb-12 font-bold text-lg">
-                        Secure your position in the architectural master-group.
-                        Entry is manual and review-based.
+                        Prefer email updates? Join the newsletter and follow along on Instagram, X, LinkedIn, and YouTube.
                     </p>
-                    <a href="https://t.me/thethinkingarchitect" className="btn-outline px-20 text-xl py-6">
-                        Enter The Hub
+                    <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="btn-outline px-20 text-xl py-6">
+                        Join the Community for updates
                     </a>
                 </motion.div>
             </motion.section>

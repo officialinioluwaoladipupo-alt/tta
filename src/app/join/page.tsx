@@ -34,12 +34,12 @@ export default function JoinPage() {
 
                         <div className="space-y-8">
                             <h3 className="text-sm font-black uppercase tracking-widest text-accent border-b border-accent/20 pb-4 inline-block">
-                                What you'll get
+                                What you&apos;ll get
                             </h3>
 
                             <ul className="space-y-4">
                                 {[
-                                    "Access to our private community space",
+                                    "Access to our private WhatsApp community",
                                     "Monthly events with practicing architects",
                                     "Resources, guides, and tools",
                                     "Honest conversations about school and practice"

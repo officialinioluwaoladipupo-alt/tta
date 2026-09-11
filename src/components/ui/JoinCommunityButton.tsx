@@ -17,7 +17,9 @@ export default function JoinCommunityButton({
 }: JoinCommunityButtonProps) {
   return (
     <Link
-      href="/join"
+      href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO"
+      target="_blank"
+      rel="noreferrer"
       className={`btn-primary text-xl lg:text-2xl px-8 py-4 lg:px-16 lg:py-6 inline-flex group items-center ${className}`}
     >
       {children}

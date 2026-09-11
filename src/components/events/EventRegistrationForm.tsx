@@ -35,29 +35,7 @@ export default function EventRegistrationForm({ eventId, eventTitle, eventDate, 
             const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
             const eventEndDate = endDate.toISOString();
 
-            // Send to n8n Webhook
-            const webhookUrl = process.env.NEXT_PUBLIC_N8N_EVENT_WEBHOOK;
-
-            if (webhookUrl && webhookUrl !== "YOUR_N8N_EVENT_WEBHOOK_URL") {
-                const response = await fetch(webhookUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        ...formData,
-                        eventId,
-                        eventTitle,
-                        eventDate,
-                        eventEndDate,
-                        registeredAt: new Date().toISOString(),
-                    }),
-                });
-
-                if (!response.ok) throw new Error("Webhook failed");
-            } else {
-                console.warn("n8n Event Webhook URL not set. Simulating n8n success.");
-            }
-
-            // Save to Supabase
+            // Save directly to Neon through the server action.
             await saveSubmission({
                 type: "event",
                 email: formData.email,

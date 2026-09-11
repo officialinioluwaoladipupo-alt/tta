@@ -1,8 +1,7 @@
-import { FieldSet, Attachment } from "airtable";
+export type FieldSet = Record<string, unknown>;
+export interface ContentAttachment { url: string; [key: string]: unknown; }
 
-export type AirtableAttachment = Attachment;
-
-export interface AirtableEventFields extends FieldSet {
+export interface EventFields extends FieldSet {
     fld60g2Jlm4glr70e?: string; // Title
     fldfuCZ1yt5Hk0DZp?: string; // Slug
     flddPxpiutxYsuYzL?: string; // Description
@@ -11,21 +10,21 @@ export interface AirtableEventFields extends FieldSet {
     fld6Azz8y9qUZAXSx?: string; // Link
     fldEA33iR5rPpAEBG?: string; // Status (e.g., "upcoming")
     fld3vQXMLYCgvuiYT?: string[]; // Tags
-    fldC3VHA5QJfiLh9W?: AirtableAttachment[]; // Image
+    fldC3VHA5QJfiLh9W?: ContentAttachment[]; // Image
     fldfWdfSuxHY7iSbA?: string; // Short Description
     fld61jNMCFHDGQ2Nq?: string; // Speakers (JSON string)
     fldLearningPoints?: string; // Learning Points
 }
 
-export interface AirtableHighlightFields extends FieldSet {
+export interface HighlightFields extends FieldSet {
     fldgZo63Sh0FIouxr?: string; // Text
     fldhj9z8zUncd2WHt?: string; // Type (news, speaker, recap)
     fldwUq6RZ8GORfYEU?: string; // Link
     fldm41s0glSxCrw4Z?: boolean; // Active/Visible
-    fld7Bc63XfnJ2rtNV?: AirtableAttachment[]; // Image
+    fld7Bc63XfnJ2rtNV?: ContentAttachment[]; // Image
 }
 
-export type AirtableRecord<T extends FieldSet> = T & {
+export type ContentRecord<T extends FieldSet> = T & {
     id: string;
     createdTime?: string;
 };

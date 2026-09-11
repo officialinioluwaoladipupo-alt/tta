@@ -1,4 +1,4 @@
-import { queryAirtable, getAirtableImage } from "@/lib/airtable";
+import { queryContent, getImageUrl } from "@/lib/content-data";
 
 export interface FormField {
     name: string;
@@ -26,19 +26,20 @@ export interface Event {
     displayDate: string; // "Feb 12, 2026"
     time: string; // "19:00"
     location: string;
+    link?: string;
     image: string;
     tags: string[];
     status: "upcoming" | "past" | "full";
     speakers?: Speaker[];
-    formFields?: FormField[]; // Dynamic fields from Airtable
-    learningPoints?: string[]; // Dynamic from Airtable
+    formFields?: FormField[]; // Dynamic content fields
+    learningPoints?: string[]; // Dynamic content data
     seoImage?: string;
     seoDescription?: string;
 }
 
-// Mapper to transform Airtable record to Event interface
-function mapAirtableEvent(record: any): Event {
-    const dateValue = record.date;
+// Map stored content to the public Event interface.
+function mapContentEvent(record: any): Event {
+    const dateValue = record.date || record.startDate;
     const dateObj = new Date(dateValue);
     const displayDate = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const time = dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -92,26 +93,27 @@ function mapAirtableEvent(record: any): Event {
         displayDate,
         time: `${time} WAT`,
         location: record.location || "Online",
-        image: getAirtableImage(record.image) || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
+        link: typeof record.link === "string" ? record.link : undefined,
+        image: record.image || getImageUrl(record.image) || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
         tags: record.tags ? (typeof record.tags === 'string' ? record.tags.split(',') : record.tags) : ["Masterclass"],
         status: record.status || "upcoming",
         speakers,
         formFields,
         learningPoints,
-        seoImage: getAirtableImage(record.seoImage),
+        seoImage: getImageUrl(record.seoImage),
         seoDescription: record.seoDescription
     };
 }
 
 export async function getUpcomingEvents(): Promise<Event[]> {
-    const records = await queryAirtable("tblbv7qDvZjkWz298", {
+    const records = await queryContent("events", {
         sort: [{ field: "date", direction: "asc" }],
     });
 
     const now = new Date();
 
     return records
-        .map(mapAirtableEvent)
+        .map(mapContentEvent)
         .filter(event => {
             const eventDate = new Date(event.date);
             // Show events that are today or in the future
@@ -120,11 +122,20 @@ export async function getUpcomingEvents(): Promise<Event[]> {
         });
 }
 
+export async function getPastEvents(): Promise<Event[]> {
+    const records = await queryContent("events");
+    const today = new Date();
+    return records
+        .map(mapContentEvent)
+        .filter((event) => new Date(event.date) < today || event.status === "past")
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
 export async function getEventBySlug(slug: string): Promise<Event | undefined> {
-    const records = await queryAirtable("tblbv7qDvZjkWz298");
+    const records = await queryContent("events");
 
     const record = records.find((r: any) => r.slug === slug);
     if (!record) return undefined;
 
-    return mapAirtableEvent(record);
+    return mapContentEvent(record);
 }
