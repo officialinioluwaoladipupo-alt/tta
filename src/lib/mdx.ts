@@ -9,10 +9,11 @@ export async function getGlobalSettings() {
     if (settings && settings.length > 0) {
       const s = settings[0];
       return {
-        siteName: s.fldJHiVrjfL3BeX4E as string,
-        siteDescription: s.fldmQGL4x54GUT8sB as string,
-        marqueeText: s.fldzwzjC7K5TwNIq7 as string,
-        defaultSeoImage: getImageUrl(s.fldrq35F3RQmlo9E6)
+        siteName: (s.siteName || s.fldJHiVrjfL3BeX4E) as string,
+        siteDescription: (s.siteDescription || s.fldmQGL4x54GUT8sB) as string,
+        marqueeText: (s.marqueeText || s.fldzwzjC7K5TwNIq7) as string,
+        footerMarqueeText: (s.footerMarqueeText || s.siteName || "TTA") as string,
+        defaultSeoImage: getImageUrl(s.defaultSeoImage || s.fldrq35F3RQmlo9E6)
       };
     }
   } catch {
