@@ -43,6 +43,29 @@ body {
   overflow-x: hidden;
 }
 
+/* Small-screen guardrails: prevent long architecture titles, tables, buttons,
+   and third-party embeds from forcing a wider layout on budget phones. */
+img, video, iframe {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .btn-primary, .btn-outline {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    justify-content: center;
+  }
+
+  h1, h2, h3, h4, p, a, button, input, textarea, select {
+    overflow-wrap: anywhere;
+  }
+
+  table {
+    min-width: 640px;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   text-transform: uppercase;

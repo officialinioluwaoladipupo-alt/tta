@@ -34,9 +34,7 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                     <motion.span variants={itemVariants} className="text-[11px] font-black uppercase tracking-[0.3em] text-accent">Community</motion.span>
                     <motion.div variants={itemVariants}>
                         <h1 className="flex flex-wrap gap-x-4 md:gap-x-6 text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter text-foreground">
-                            <GlitchText as="span" text="FIND" />
-                            <GlitchText as="span" text="YOUR" font="font-logo" />
-                            <GlitchText as="span" text="PEOPLE" />
+                            <GlitchText as="span" text="COMMUNITY" />
                         </h1>
                     </motion.div>
                 </div>
@@ -61,9 +59,9 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                 className="max-w-[1600px] w-full px-6 py-40 border-x border-t border-foreground/5 grid grid-cols-1 md:grid-cols-2 gap-20"
             >
                 <motion.div variants={itemVariants} className="flex flex-col gap-8">
-                    <h2 className="text-4xl font-black uppercase tracking-tighter text-foreground">Real-time <br /> DISCOURSE</h2>
+                    <h2 className="text-4xl font-black uppercase tracking-tighter text-foreground">A space for architects to think out loud, together.</h2>
                     <p className="text-xl text-foreground/50 leading-relaxed font-medium">
-                        Find the people thinking about this the same way you are. TTA&apos;s community lives on WhatsApp, with architects and students working through real questions together, not performing for an audience.
+                        TTA&apos;s community lives on WhatsApp. It&apos;s where the conversation from Think Sessions keeps going, where members share work, ask questions, and figure things out with people who understand the field.
                     </p>
                     <a
                         href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO"
@@ -77,18 +75,18 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                 <motion.div variants={itemVariants} className="grid grid-cols-1 gap-12">
                     <CommunityFeature
                         icon={<Shield size={24} />}
-                        label="First access"
-                        detail="First access to Think Session dates and RSVPs."
+                        label="What happens here"
+                        detail="Members swap resources, talk through career decisions, and get first word on upcoming Think Sessions. No noise, no spam, just architects talking to architects."
                     />
                     <CommunityFeature
                         icon={<Users size={24} />}
-                        label="Real questions"
-                        detail="A space to ask the questions studio critiques never leave room for."
+                        label="Who it&apos;s for"
+                        detail="Students, early-career architects, and anyone rethinking their practice. If you&apos;re figuring out where you fit in architecture, this is a good place to do it."
                     />
                     <CommunityFeature
                         icon={<MessageSquare size={24} />}
-                        label="Direct line"
-                        detail="A direct line to architects further along the path than you."
+                        label="Stay connected"
+                        detail="The conversation continues between sessions, with people who understand the field."
                     />
                 </motion.div>
             </motion.section>
@@ -102,12 +100,12 @@ export default function CommunityClient({ highlights }: CommunityClientProps) {
                 className="max-w-[1600px] w-full px-6 py-60 border-x border-t border-foreground/5 flex flex-col items-center justify-center bg-dot-pattern"
             >
                 <motion.div variants={itemVariants} className="text-center">
-                    <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-8 leading-none text-foreground">FIND YOUR <br /> PEOPLE</h2>
+                    <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-8 leading-none text-foreground">THINK OUT LOUD. <br /> TOGETHER.</h2>
                     <p className="text-foreground/40 max-w-xl mx-auto mb-12 font-bold text-lg">
-                        Prefer email updates? Join the newsletter and follow along on Instagram, X, LinkedIn, and YouTube.
+                        Join the community and keep the conversation going.
                     </p>
                     <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="btn-outline px-20 text-xl py-6">
-                        Join the Community for updates
+                        Join the Community →
                     </a>
                 </motion.div>
             </motion.section>

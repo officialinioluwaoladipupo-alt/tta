@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Globe, Instagram, Twitter } from "lucide-react";
+import { Instagram, Twitter } from "lucide-react";
 
 export default function Footer({ settings }: { settings?: Record<string, unknown> }) {
   const siteName = typeof settings?.siteName === "string" ? settings.siteName : "THE THINKING ARCHITECT";
@@ -91,8 +91,6 @@ export default function Footer({ settings }: { settings?: Record<string, unknown
 
         <div className="mt-40 border-t border-foreground/10 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col gap-1 items-center md:items-start text-[10px] font-black uppercase tracking-widest text-foreground/40">
-              <span>© 2026 The Thinking Architect.</span>
-              <div className="flex items-center gap-2"><Globe size={14} /> Built for architects who take their practice seriously.</div>
           </div>
           <div className="text-center md:text-right">
             <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60">
