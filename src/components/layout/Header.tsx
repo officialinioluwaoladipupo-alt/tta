@@ -54,14 +54,14 @@ export default function Header({ highlights = [], settings }: Props) {
         {showMarquee && <CommunityMarquee highlights={highlights} />}
 
         <div className="glass w-full border-b border-white/5">
-          <div className="max-w-[1600px] mx-auto px-6 h-20 flex justify-between items-center">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center gap-3">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex items-center gap-12"
+              className="flex min-w-0 items-center gap-5 lg:gap-12"
             >
-              <Link href="/" className="text-3xl font-black tracking-tighter text-foreground hover:text-accent transition-all font-logo">
+              <Link href="/" className="shrink-0 whitespace-nowrap break-normal text-3xl font-black leading-none tracking-tighter text-foreground hover:text-accent transition-all font-logo">
                 TTA
               </Link>
 
@@ -88,9 +88,13 @@ export default function Header({ highlights = [], settings }: Props) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex items-center gap-4"
+              className="flex shrink-0 items-center gap-2 sm:gap-4"
             >
-              <TallyPopupButton className="hidden lg:inline-flex btn-primary">Join the Community <span aria-hidden="true">→</span></TallyPopupButton>
+              <TallyPopupButton aria-label="Join the TTA Community" className="btn-primary inline-flex min-h-10 shrink-0 whitespace-nowrap break-normal px-3 py-2 text-[10px] sm:px-4 sm:text-xs lg:px-6 lg:py-3 lg:text-[11px]">
+                <span className="sm:hidden">Join</span>
+                <span className="hidden sm:inline">Join the Community</span>
+                <span aria-hidden="true">→</span>
+              </TallyPopupButton>
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="lg:hidden text-foreground p-2"
