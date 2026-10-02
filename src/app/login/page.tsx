@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
@@ -21,13 +20,13 @@ export default function LoginPage() {
                             <ShieldCheck size={20} className="mt-0.5 shrink-0 text-accent" />
                             <p>Sign in securely through Auth0. Your dashboard access is based on the role assigned to your account.</p>
                         </div>
-                        <Link
+                        <a
                             href="/auth/login?returnTo=%2Fdashboard"
                             className="mt-2 bg-foreground text-background py-5 px-8 font-black uppercase tracking-widest flex items-center justify-between hover:bg-accent hover:text-black transition-all group/btn"
                         >
                             Continue to secure login
                             <ArrowRight size={20} className="group-hover/btn:translate-x-2 transition-transform duration-300" />
-                        </Link>
+                        </a>
                     </div>
 
                     {/* Decorative Corner */}

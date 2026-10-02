@@ -72,6 +72,7 @@ export async function requirePermission(permission: Permission, mode: Authorizat
   const denial = checkPermission(user, permission);
   if (denial === 403) {
     await logAudit({ action: "login_denied", contentType: "authorization", recordId: permission, changes: { reason: user.email_verified === true ? "missing_permission" : "email_not_verified" } });
+    if (mode === "page") redirect("/access-denied");
     throw new AuthorizationError(403, "Permission denied");
   }
 
@@ -90,6 +91,7 @@ export async function requireAdmin(mode: AuthorizationMode = "api") {
   const user = session.user as Record<string, unknown>;
   if (!isAdminUser(user)) {
     await logAudit({ action: "login_denied", contentType: "audit_logs", changes: { reason: "admin_required" } });
+    if (mode === "page") redirect("/access-denied");
     throw new AuthorizationError(403, "Admin permission required");
   }
   return { session };
