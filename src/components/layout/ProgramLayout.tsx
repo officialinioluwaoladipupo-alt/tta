@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import GlitchText from "@/components/ui/GlitchText";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";

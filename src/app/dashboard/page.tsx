@@ -1,8 +1,8 @@
 import DashboardClient from "./DashboardClient";
-import { auth0 } from "@/lib/auth0";
-import { redirect } from "next/navigation";
+import { requirePermission } from "@/lib/authorization";
 import { sql } from "@/lib/db";
 import type { ContentRecord, EventFields, HighlightFields } from "@/lib/cms-types";
+import { getSubmissions, SUBMISSION_TYPES, type SubmissionFilters, type SubmissionType } from "@/lib/submission-data";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +11,25 @@ function normalizeContentRecord(row: Record<string, unknown>) {
     return { id: String(row.id), ...data };
 }
 
-export default async function Dashboard() {
-    if (!(await auth0.getSession())) redirect("/auth/login");
-    let submissions: never[] = [];
+export default async function Dashboard({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+    const { permissions } = await requirePermission("read:dashboard", "page");
+    const params = await searchParams;
+    const value = (key: string) => typeof params[key] === "string" ? params[key] : undefined;
+    const rawType = value("type");
+    const filters: SubmissionFilters = {
+        search: value("search"),
+        type: SUBMISSION_TYPES.includes(rawType as SubmissionType) ? rawType as SubmissionType : undefined,
+        from: value("from"),
+        to: value("to"),
+    };
+    const page = Math.max(1, Number.parseInt(value("page") || "1", 10) || 1);
+    const submissionResult = await getSubmissions(filters, page);
+    const submissions = submissionResult.rows;
     let events: ContentRecord<EventFields>[] = [];
     let highlights: ContentRecord<HighlightFields>[] = [];
     let settings: Record<string, unknown> | undefined;
     if (sql) {
         try {
-            submissions = await sql`SELECT * FROM submissions ORDER BY created_at DESC` as never[];
             events = (await sql`SELECT id, data FROM events ORDER BY created_at DESC`).map(normalizeContentRecord) as ContentRecord<EventFields>[];
             highlights = (await sql`SELECT id, data FROM highlights ORDER BY created_at DESC`).map(normalizeContentRecord) as ContentRecord<HighlightFields>[];
             settings = (await sql`SELECT data FROM settings ORDER BY created_at DESC LIMIT 1`)[0]?.data as Record<string, unknown> | undefined;
@@ -33,6 +43,11 @@ export default async function Dashboard() {
             initialEvents={events}
             initialHighlights={highlights}
             initialSettings={settings}
+            permissions={[...permissions]}
+            submissionFilters={filters}
+            submissionPage={page}
+            submissionTotal={submissionResult.total}
+            submissionError={submissionResult.error}
         />
     );
 }

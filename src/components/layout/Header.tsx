@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import TallyPopupButton from "@/components/ui/TallyPopupButton";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -17,10 +18,11 @@ const navLinks = [
 
 import { CommunityHighlight } from "@/lib/community-data";
 import CommunityMarquee from "@/components/community/CommunityMarquee";
+import type { GlobalSettings } from "@/lib/mdx";
 
 interface Props {
   highlights?: CommunityHighlight[];
-  settings?: any;
+  settings?: GlobalSettings;
 }
 
 export default function Header({ highlights = [], settings }: Props) {
@@ -88,7 +90,7 @@ export default function Header({ highlights = [], settings }: Props) {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex items-center gap-4"
             >
-              <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="hidden lg:inline-flex btn-primary">Join the Community <span aria-hidden="true">→</span></a>
+              <TallyPopupButton className="hidden lg:inline-flex btn-primary">Join the Community <span aria-hidden="true">→</span></TallyPopupButton>
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="lg:hidden text-foreground p-2"
@@ -132,7 +134,7 @@ export default function Header({ highlights = [], settings }: Props) {
                 </motion.div>
               ))}
               <div className="flex flex-col gap-4 mt-8">
-                <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="btn-primary justify-center" onClick={() => setIsOpen(false)}>Join the Community</a>
+                <TallyPopupButton className="btn-primary justify-center" onClick={() => setIsOpen(false)}>Join the Community</TallyPopupButton>
               </div>
             </div>
           </motion.div>

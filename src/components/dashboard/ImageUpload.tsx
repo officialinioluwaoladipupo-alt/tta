@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, ImageIcon, Loader2 } from "lucide-react";
+import { Upload, ImageIcon, Loader2 } from "lucide-react";
 import { uploadImage } from "@/lib/cms-actions";
 import Image from "next/image";
 
@@ -9,16 +9,24 @@ interface Props {
     onUploadComplete: (url: string) => void;
     currentImage?: string;
     label: string;
+    entityType?: "event" | "team" | "speaker" | "highlight" | "content";
 }
 
-export default function ImageUpload({ onUploadComplete, currentImage, label }: Props) {
+export default function ImageUpload({ onUploadComplete, currentImage, label, entityType = "content" }: Props) {
     const [preview, setPreview] = useState<string | null>(currentImage || null);
     const [uploading, setUploading] = useState(false);
+    const [fileInfo, setFileInfo] = useState<{ name: string; size: number; width: number; height: number } | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setError(null);
+        if (!/[.](jpe?g|png|webp)$/i.test(file.name) || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setError("Only JPEG, PNG, and WebP images are allowed"); return; }
+        if (file.size > 5 * 1024 * 1024) { setError("Image must be 5 MB or smaller"); return; }
+        const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => { const image = new window.Image(); image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight }); image.onerror = () => reject(new Error("The image file is corrupt or unreadable")); image.src = URL.createObjectURL(file); });
+        setFileInfo({ name: file.name, size: file.size, ...dimensions });
 
         // Preview
         const reader = new FileReader();
@@ -31,13 +39,13 @@ export default function ImageUpload({ onUploadComplete, currentImage, label }: P
         setUploading(true);
         try {
             // Convert to base64 for server action
-            const base64 = await toBase64(file);
-            const res = await uploadImage(base64 as string, file.name);
+            const dataUrl = await toBase64(file);
+            const res = await uploadImage(dataUrl, file.name, entityType);
 
             if (res.success && res.url) {
                 onUploadComplete(res.url);
             } else {
-                alert("Upload failed: " + res.error);
+            setError(res.error || "Upload failed. Please try again.");
             }
         } catch (err) {
             console.error(err);
@@ -46,10 +54,10 @@ export default function ImageUpload({ onUploadComplete, currentImage, label }: P
         }
     };
 
-    const toBase64 = (file: File) => new Promise((resolve, reject) => {
+    const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onload = () => resolve(reader.result as string);
         reader.onerror = error => reject(error);
     });
 
@@ -89,6 +97,8 @@ export default function ImageUpload({ onUploadComplete, currentImage, label }: P
                 className="hidden"
                 accept="image/*"
             />
+            {fileInfo && <p className="text-xs text-foreground/60">{fileInfo.name} · {(fileInfo.size / 1024 / 1024).toFixed(2)} MB · {fileInfo.width}×{fileInfo.height}px</p>}
+            {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
         </div>
     );
 }

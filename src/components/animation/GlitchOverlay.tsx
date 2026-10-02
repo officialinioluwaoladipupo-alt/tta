@@ -2,22 +2,16 @@
 
 import { motion } from "framer-motion";
 
-import { useState, useEffect } from "react";
-
 export default function GlitchOverlay() {
-    const [glitchConfig, setGlitchConfig] = useState<any[]>([]);
-
-    useEffect(() => {
-        setGlitchConfig([...Array(10)].map(() => ({
-            x: (Math.random() - 0.5) * 100,
-            y: (Math.random() - 0.5) * 100,
-            width: Math.random() * 200 + 50,
-            height: Math.random() * 100 + 20,
-            delay: Math.random() * 0.2,
-            top: Math.random() * 100,
-            left: Math.random() * 100
-        })));
-    }, []);
+    const glitchConfig = Array.from({ length: 10 }, (_, index) => ({
+        x: Math.sin(index * 12.7) * 50,
+        y: Math.cos(index * 8.3) * 50,
+        width: 50 + ((index * 37) % 200),
+        height: 20 + ((index * 19) % 100),
+        delay: (index % 5) * 0.04,
+        top: (index * 31) % 100,
+        left: (index * 67) % 100,
+    }));
     return (
         <motion.div
             initial={{ opacity: 0 }}

@@ -6,19 +6,17 @@ import { usePathname } from "next/navigation";
 import { Asterisk } from "@/components/ui/DecorativeGraphics";
 
 export default function Preloader() {
-  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
+  const [finishedPath, setFinishedPath] = useState<string | null>(null);
+  const isLoading = finishedPath !== pathname;
 
   useEffect(() => {
     // Reset loading state on path change
-    setIsLoading(true);
-    
-    // Lock body scroll
     document.body.style.overflow = "hidden";
     
     // Sequence timing
     const timer = setTimeout(() => {
-      setIsLoading(false);
+      setFinishedPath(pathname);
       document.body.style.overflow = "unset";
     }, 2500); // 2.5s total duration
 

@@ -109,39 +109,3 @@ Open `src/lib/program-mapper.ts` and add it to the top list:
 1. Create a folder: `src/app/programs/history-of-form`
 2. Create a file inside it called `page.tsx`.
 3. Copy the code from `lockedin-2026/page.tsx` and paste it there to get started.
-
----
-
-## 6. Optional: Using Airtable (No Code Editing)
-
-If you prefer using a spreadsheet instead of editing code, you can connect Airtable.
-
-### Step 1: Create Airtable Base
-
-1. Create a new Base.
-2. Create a table named **"Events"**.
-3. Create these specific columns (Case Sensitive):
-   - **Title** (Single Line Text)
-   - **Description** (Long Text) - _Put your `[program: locked-in-2026]` tag here!_
-   - **Start Date** (Date & Time)
-   - **End Date** (Date & Time)
-   - **Link** (URL)
-   - **Type** (Single Select: Talk, Workshop, etc.)
-   - **Focus** (Single Line Text)
-
-### Step 2: Get API Keys
-
-1. Go to Airtable Developer Hub.
-2. Create a **Personal Access Token**.
-3. Get your **Base ID** (from the URL of your base).
-
-### Step 3: Connect to Website
-
-Add these keys to your `.env.local` file (ask your developer):
-
-```bash
-AIRTABLE_API_KEY=pat...
-AIRTABLE_BASE_ID=app...
-```
-
-Once connected, the website will **ignore** the local file and fetch live from Airtable.

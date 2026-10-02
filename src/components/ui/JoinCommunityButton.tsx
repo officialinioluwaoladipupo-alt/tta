@@ -2,7 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import React from "react";
-import Link from "next/link";
+import TallyPopupButton from "@/components/ui/TallyPopupButton";
 
 interface JoinCommunityButtonProps {
   children?: React.ReactNode;
@@ -16,14 +16,11 @@ export default function JoinCommunityButton({
   showIcon = true,
 }: JoinCommunityButtonProps) {
   return (
-    <Link
-      href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO"
-      target="_blank"
-      rel="noreferrer"
+    <TallyPopupButton
       className={`btn-primary text-xl lg:text-2xl px-8 py-4 lg:px-16 lg:py-6 inline-flex group items-center ${className}`}
     >
       {children}
       {showIcon && <ArrowRight className="group-hover:translate-x-2 transition-transform ml-2" />}
-    </Link>
+    </TallyPopupButton>
   );
 }

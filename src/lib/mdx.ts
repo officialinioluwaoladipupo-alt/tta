@@ -1,6 +1,29 @@
-import { queryContent, getImageUrl } from "./content-data";
+import { queryContent, getImageUrl, contentString, type ContentRecord } from "./content-data";
 
-export async function getGlobalSettings() {
+export interface ProgramData {
+  slug: string;
+  title: string;
+  label: string;
+  status: string;
+  featured: boolean;
+  description: string;
+  content?: string;
+  image?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoImage?: string;
+}
+
+export interface GlobalSettings {
+  siteName: string;
+  siteDescription: string;
+  marqueeText: string;
+  footerMarqueeText: string;
+  defaultSeoImage?: string;
+  showHeaderMarquee?: boolean;
+}
+
+export async function getGlobalSettings(): Promise<GlobalSettings> {
   try {
     const settings = await queryContent("Settings", {
       returnFieldsByFieldId: true
@@ -23,11 +46,28 @@ export async function getGlobalSettings() {
     siteName: "The Thinking Architect",
     siteDescription: "An authority signal and gateway to TTA platforms. Calm, Intentional, Durable.",
     marqueeText: "THE THINKING ARCHITECT",
+    footerMarqueeText: "THE THINKING ARCHITECT",
     defaultSeoImage: undefined,
   };
 }
 
-export async function getAllPrograms() {
+function mapProgram(record: ContentRecord): ProgramData {
+  return {
+    slug: contentString(record, "fldposSLgP7UKY3oU") ?? record.id,
+    title: contentString(record, "fldJGpX7Oj9ElKfAi") ?? "Untitled program",
+    label: contentString(record, "fldtOunVPReRnvVGz") ?? "Program",
+    status: contentString(record, "fldger01xzPMYfiZh") ?? "active",
+    featured: record.fldkKaRGFxoAhK2j6 === true,
+    description: contentString(record, "fldYzRVAc6wWZayWE") ?? "",
+    content: contentString(record, "fldtM2lAoLIlotb5H"),
+    image: getImageUrl(record.fldmfK9ySWvpVCPE8),
+    seoTitle: contentString(record, "fldfEd5BB5ShohfnS"),
+    seoDescription: contentString(record, "fldB2tqhZErMqcTUr"),
+    seoImage: getImageUrl(record.fldg9Eg7AHrksMmMp),
+  };
+}
+
+export async function getAllPrograms(): Promise<ProgramData[]> {
   const records = await queryContent("programs", {
     sort: [{ field: "fldJGpX7Oj9ElKfAi", direction: "asc" }], // Sort by Title ID
     returnFieldsByFieldId: true
@@ -42,39 +82,15 @@ export async function getAllPrograms() {
     description: "A structured program for architects navigating the transition from education to practice.",
   }];
 
-  return records.map((record: any) => ({
-    slug: record.fldposSLgP7UKY3oU,
-    title: record.fldJGpX7Oj9ElKfAi,
-    label: record.fldtOunVPReRnvVGz,
-    status: record.fldger01xzPMYfiZh,
-    featured: record.fldkKaRGFxoAhK2j6,
-    description: record.fldYzRVAc6wWZayWE,
-    image: getImageUrl(record.fldmfK9ySWvpVCPE8),
-    seoTitle: record.fldfEd5BB5ShohfnS,
-    seoDescription: record.fldB2tqhZErMqcTUr,
-    seoImage: getImageUrl(record.fldg9Eg7AHrksMmMp)
-  }));
+  return records.map(mapProgram);
 }
 
-export async function getProgramBySlug(slug: string) {
+export async function getProgramBySlug(slug: string): Promise<ProgramData | null> {
   const records = await queryContent("programs", {
     returnFieldsByFieldId: true
   });
 
-  const record = records.find((r: any) => r.fldposSLgP7UKY3oU === slug);
+  const record = records.find((item) => item.fldposSLgP7UKY3oU === slug);
   if (!record) return null;
-
-  return {
-    slug: record.fldposSLgP7UKY3oU,
-    title: record.fldJGpX7Oj9ElKfAi,
-    label: record.fldtOunVPReRnvVGz,
-    status: record.fldger01xzPMYfiZh,
-    featured: record.fldkKaRGFxoAhK2j6,
-    description: record.fldYzRVAc6wWZayWE,
-    content: record.fldtM2lAoLIlotb5H,
-    image: getImageUrl(record.fldmfK9ySWvpVCPE8),
-    seoTitle: record.fldfEd5BB5ShohfnS,
-    seoDescription: record.fldB2tqhZErMqcTUr,
-    seoImage: getImageUrl(record.fldg9Eg7AHrksMmMp)
-  };
+  return mapProgram(record);
 }

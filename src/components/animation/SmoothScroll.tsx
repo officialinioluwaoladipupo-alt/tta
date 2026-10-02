@@ -1,8 +1,6 @@
 "use client";
 
-import { useLenis } from "lenis/react";
 import { ReactLenis } from "lenis/react";
-import { useEffect } from "react";
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   return (

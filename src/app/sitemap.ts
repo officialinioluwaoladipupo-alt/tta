@@ -1,14 +1,13 @@
 import type { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site-url'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://tta.foundation'
-
   return [
-    { url: baseUrl, lastModified: new Date() },
-    { url: `${baseUrl}/about`, lastModified: new Date() },
-    { url: `${baseUrl}/events`, lastModified: new Date() },
-    { url: `${baseUrl}/media`, lastModified: new Date() },
-    { url: `${baseUrl}/community`, lastModified: new Date() },
-    { url: `${baseUrl}/contact`, lastModified: new Date() },
+    { url: SITE_URL, lastModified: new Date() },
+    { url: `${SITE_URL}/about`, lastModified: new Date() },
+    { url: `${SITE_URL}/events`, lastModified: new Date() },
+    { url: `${SITE_URL}/media`, lastModified: new Date() },
+    { url: `${SITE_URL}/community`, lastModified: new Date() },
+    { url: `${SITE_URL}/contact`, lastModified: new Date() },
   ]
 }

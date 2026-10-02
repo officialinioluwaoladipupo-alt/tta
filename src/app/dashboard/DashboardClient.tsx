@@ -12,9 +12,10 @@ import {
     createHighlight,
     updateHighlight,
     deleteHighlight
-    , updateSettings
+    , updateSettings, exportSubmissionsCsv, deleteSubmission
 } from "@/lib/cms-actions";
 import ImageUpload from "@/components/dashboard/ImageUpload";
+import SpeakerEditor from "@/components/dashboard/SpeakerEditor";
 import {
     ContentRecord,
     EventFields,
@@ -22,15 +23,36 @@ import {
     EventFormData,
     HighlightFormData
 } from "@/lib/cms-types";
+import type { Permission } from "@/lib/authorization";
+import type { SubmissionFilters } from "@/lib/submission-data";
+import type { Speaker } from "@/lib/event-data";
 
 // Helper type for union of record types
 type DashboardRecord = ContentRecord<EventFields> | ContentRecord<HighlightFields>;
+
+function eventField(record: ContentRecord<EventFields> | null, key: string, legacyKey?: string) {
+    const value = record?.[key] ?? (legacyKey ? record?.[legacyKey] : undefined);
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").join(", ");
+    return "";
+}
+
+function eventSpeakers(record: ContentRecord<EventFields> | null) {
+    const value = record?.speakers ?? record?.fld61jNMCFHDGQ2Nq;
+    if (typeof value === "string") return value;
+    return Array.isArray(value) ? value as Speaker[] : undefined;
+}
 
 interface Props {
     initialSubmissions: Submission[]; // Submissions are stored in Neon
     initialEvents: ContentRecord<EventFields>[];
     initialHighlights: ContentRecord<HighlightFields>[];
     initialSettings?: Record<string, unknown>;
+    permissions: string[];
+    submissionFilters: SubmissionFilters;
+    submissionPage: number;
+    submissionTotal: number;
+    submissionError?: string;
 }
 
 interface Submission {
@@ -42,13 +64,16 @@ interface Submission {
     data: unknown;
 }
 
-export default function DashboardClient({ initialSubmissions, initialEvents, initialHighlights, initialSettings }: Props) {
+export default function DashboardClient({ initialSubmissions, initialEvents, initialHighlights, initialSettings, permissions, submissionFilters, submissionPage, submissionTotal, submissionError }: Props) {
+    const can = (permission: Permission) => permissions.includes(permission);
     const [activeTab, setActiveTab] = useState<"submissions" | "events" | "highlights" | "settings">("submissions");
     const [view, setView] = useState<"list" | "create" | "edit">("list");
     const [editingRecord, setEditingRecord] = useState<DashboardRecord | null>(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+    const [pendingAction, setPendingAction] = useState<string | null>(null);
+    const [submissionMessage, setSubmissionMessage] = useState<string | null>(submissionError ? "We couldn't load submissions. Try again." : null);
 
     const router = useRouter();
 
@@ -64,7 +89,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
         const hlt = record as ContentRecord<HighlightFields>;
 
         const imgVal = evt.fldC3VHA5QJfiLh9W || hlt.fld7Bc63XfnJ2rtNV;
-        const imgUrl = (imgVal && imgVal.length > 0) ? imgVal[0].url : null;
+        const imgUrl = typeof evt.image === "string" ? evt.image : (imgVal && imgVal.length > 0) ? imgVal[0].url : null;
 
         setUploadedImageUrl(imgUrl);
         setView("edit");
@@ -76,25 +101,44 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
         setView("create");
     };
 
-    const exportToCSV = () => {
-        const newsletterSubscribers = initialSubmissions.filter((sub) => sub.type === "newsletter");
-        if (newsletterSubscribers.length === 0) return;
-        const headers = ["ID", "Created At", "Type", "Name", "Email", "Data"];
-        const rows = newsletterSubscribers.map(sub => [
-            sub.id,
-            sub.created_at,
-            sub.type,
-            sub.name,
-            sub.email,
-            JSON.stringify(sub.data).replace(/"/g, '""')
-        ]);
-        const csvContent = [headers.join(","), ...rows.map(r => r.map(cell => `"${cell}"`).join(","))].join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `tta_newsletter_${new Date().toISOString().split('T')[0]}.csv`);
-        link.click();
+    const filtersQuery = (page: number) => {
+        const params = new URLSearchParams();
+        if (submissionFilters.search) params.set("search", submissionFilters.search);
+        if (submissionFilters.type) params.set("type", submissionFilters.type);
+        if (submissionFilters.from) params.set("from", submissionFilters.from);
+        if (submissionFilters.to) params.set("to", submissionFilters.to);
+        params.set("page", String(page));
+        return `?${params.toString()}`;
+    };
+
+    const exportToCSV = async () => {
+        if (!window.confirm("This file contains personal data. Continue with the export?")) return;
+        setPendingAction("export"); setSubmissionMessage(null);
+        try {
+            const result = await exportSubmissionsCsv(submissionFilters);
+            if (!result.success || !result.csv) setSubmissionMessage("We couldn't export these submissions. Please try again.");
+            else {
+                const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `tta_submissions_${new Date().toISOString().split("T")[0]}.csv`;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        } catch { setSubmissionMessage("We couldn't export these submissions. Please try again."); }
+        setPendingAction(null);
+    };
+
+    const removeSubmission = async (submission: Submission) => {
+        if (!window.confirm(`Delete the submission from ${submission.name || submission.email}?`)) return;
+        setPendingAction(`delete-${submission.id}`); setSubmissionMessage(null);
+        try {
+            const result = await deleteSubmission(submission.id, submission.name || submission.email);
+            if (result.success) router.refresh();
+            else setSubmissionMessage("We couldn't delete that submission. Please try again.");
+        } catch { setSubmissionMessage("We couldn't delete that submission. Please try again."); }
+        setPendingAction(null);
     };
 
     return (
@@ -125,15 +169,18 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                 >
                                     <Sparkles size={16} /> Live Highlights
                                 </button>
-                                <button
+                                {can("manage:settings") && <button
                                     onClick={() => { setActiveTab("settings"); setView("edit"); }}
                                     className={`flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'settings' ? 'bg-accent text-black' : 'hover:bg-foreground/5 text-foreground/60'}`}
                                 >
                                     <Settings size={16} /> Global Settings
-                                </button>
-                                <Link href="/dashboard/team" className="flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-foreground/5 text-foreground/60">
+                                </button>}
+                                {can("manage:team") && <Link href="/dashboard/team" className="flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-foreground/5 text-foreground/60">
                                     <Users size={16} /> Manage Team
-                                </Link>
+                                </Link>}
+                                {can("manage:settings") && <Link href="/admin/audit" className="flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-foreground/5 text-foreground/60">
+                                    <Settings size={16} /> Audit Log
+                                </Link>}
                             </nav>
                         </div>
                     </div>
@@ -161,12 +208,12 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                         </div>
 
                         <div className="flex gap-4">
-                            {activeTab === 'submissions' && (
-                                <button onClick={exportToCSV} className="bg-foreground text-background px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-accent hover:text-black transition-all">
-                                    <Download size={14} /> Export Newsletter CSV
+                            {activeTab === 'submissions' && can("export:data") && (
+                                <button disabled={pendingAction === "export"} onClick={exportToCSV} className="bg-foreground text-background px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-accent hover:text-black transition-all disabled:opacity-50">
+                                    <Download size={14} /> {pendingAction === "export" ? "Preparing..." : "Export CSV"}
                                 </button>
                             )}
-                            {activeTab !== 'submissions' && activeTab !== 'settings' && view === 'list' && (
+                            {activeTab !== 'submissions' && activeTab !== 'settings' && view === 'list' && can(activeTab === "events" ? "edit:events" : "edit:highlights") && (
                                 <button onClick={handleCreate} className="bg-accent text-black px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:scale-105 transition-all">
                                     <PlusCircle size={14} /> Create New
                                 </button>
@@ -183,14 +230,36 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
 
                         {/* LIST VIEW: Submissions */}
                         {activeTab === 'submissions' && (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
+                            <div className="space-y-8">
+                                <form method="get" className="grid grid-cols-1 md:grid-cols-5 gap-3 border border-foreground/10 p-4">
+                                    <input name="search" defaultValue={submissionFilters.search || ""} placeholder="Search name or email" className="bg-foreground/[0.03] border border-foreground/10 p-3 text-sm md:col-span-2" />
+                                    <select name="type" defaultValue={submissionFilters.type || ""} className="bg-foreground/[0.03] border border-foreground/10 p-3 text-sm">
+                                        <option value="">All types</option><option value="newsletter">Newsletter</option><option value="join">Community join</option><option value="event">Event registration</option>
+                                    </select>
+                                    <input name="from" type="date" defaultValue={submissionFilters.from || ""} className="bg-foreground/[0.03] border border-foreground/10 p-3 text-sm" />
+                                    <input name="to" type="date" defaultValue={submissionFilters.to || ""} className="bg-foreground/[0.03] border border-foreground/10 p-3 text-sm" />
+                                    <input type="hidden" name="page" value="1" />
+                                    <div className="md:col-span-5 flex flex-wrap gap-2 items-center">
+                                        <button className="btn-primary px-5 py-3 text-xs">Apply filters</button>
+                                        <Link href="/dashboard" className="btn-outline px-5 py-3 text-xs">Clear filters</Link>
+                                        <span className="text-xs opacity-50 ml-auto">Quick range:</span>
+                                        {[{ label: "Today", days: 0 }, { label: "7 days", days: 7 }, { label: "30 days", days: 30 }].map((preset) => {
+                                            const date = new Date(); date.setDate(date.getDate() - preset.days);
+                                            const from = date.toISOString().slice(0, 10);
+                                            return <Link key={preset.label} href={`/dashboard?from=${from}&page=1`} className="btn-outline px-3 py-2 text-xs">{preset.label}</Link>;
+                                        })}
+                                    </div>
+                                </form>
+                                {submissionMessage && <div className="border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400 flex justify-between gap-4"><span>{submissionMessage}</span><button onClick={() => router.refresh()} className="underline">Retry</button></div>}
+                                {initialSubmissions.length === 0 && !submissionMessage ? <div className="border border-foreground/10 p-10 text-center"><p className="font-bold">No submissions match these filters.</p><Link href="/dashboard" className="text-accent underline mt-2 inline-block">Clear filters</Link></div> : <div className="overflow-x-auto">
+                                <table className="dashboard-submissions-table w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-foreground/5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 bg-foreground/[0.01]">
                                             <th className="px-10 py-6">Identity</th>
                                             <th className="px-10 py-6">Type</th>
                                             <th className="px-10 py-6">Timestamp</th>
                                             <th className="px-10 py-6">Data</th>
+                                            <th className="px-10 py-6">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-foreground/5">
@@ -209,10 +278,13 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                 <td className="px-10 py-8 align-top">
                                                     <pre className="text-[10px] font-mono whitespace-pre-wrap max-w-sm line-clamp-3">{JSON.stringify(sub.data, null, 2)}</pre>
                                                 </td>
+                                                <td className="px-10 py-8 align-top"><button disabled={!can("delete:content") || pendingAction === `delete-${sub.id}`} onClick={() => removeSubmission(sub)} className="text-red-500 text-xs font-bold uppercase disabled:opacity-40">{pendingAction === `delete-${sub.id}` ? "Deleting..." : "Delete"}</button></td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>}
+                                {submissionTotal > 0 && <div className="flex items-center justify-between text-sm"><span>{submissionTotal} total · page {submissionPage} of {Math.ceil(submissionTotal / 50)}</span><div className="flex gap-2">{submissionPage > 1 && <Link href={`/dashboard${filtersQuery(submissionPage - 1)}`} className="btn-outline px-4 py-2">Previous</Link>}{submissionPage < Math.ceil(submissionTotal / 50) && <Link href={`/dashboard${filtersQuery(submissionPage + 1)}`} className="btn-outline px-4 py-2">Next</Link>}</div></div>}
                             </div>
                         )}
 
@@ -223,14 +295,14 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     // Cast for access in map
                                     const evt = item as ContentRecord<EventFields>;
                                     const hlt = item as ContentRecord<HighlightFields>;
-                                    const image = (evt.fldC3VHA5QJfiLh9W && evt.fldC3VHA5QJfiLh9W.length > 0) ? evt.fldC3VHA5QJfiLh9W[0].url :
-                                        ((hlt.fld7Bc63XfnJ2rtNV && hlt.fld7Bc63XfnJ2rtNV.length > 0) ? hlt.fld7Bc63XfnJ2rtNV[0].url : null);
+                                    const image = (typeof evt.image === "string" ? evt.image : undefined) || ((evt.fldC3VHA5QJfiLh9W && evt.fldC3VHA5QJfiLh9W.length > 0) ? evt.fldC3VHA5QJfiLh9W[0].url :
+                                        ((hlt.fld7Bc63XfnJ2rtNV && hlt.fld7Bc63XfnJ2rtNV.length > 0) ? hlt.fld7Bc63XfnJ2rtNV[0].url : null));
 
-                                    const title = activeTab === 'events' ? (evt.fld60g2Jlm4glr70e || "Untitled Event") :
+                                    const title = activeTab === 'events' ? (eventField(evt, "title", "fld60g2Jlm4glr70e") || "Untitled Event") :
                                         (hlt.fldgZo63Sh0FIouxr ? (hlt.fldgZo63Sh0FIouxr.substring(0, 50) + (hlt.fldgZo63Sh0FIouxr.length > 50 ? '...' : '')) : "Empty Highlight");
 
                                     const meta = activeTab === 'events'
-                                        ? `${evt.fldnqKLlla00mhERq ? new Date(evt.fldnqKLlla00mhERq).toLocaleDateString() : 'Invalid Date'} // ${evt.fldCCH17B42hKfQM9 || 'Undefined'}`
+                                        ? `${eventField(evt, "startDate", "fldnqKLlla00mhERq") ? new Date(eventField(evt, "startDate", "fldnqKLlla00mhERq")).toLocaleDateString() : 'Date not set'} // ${eventField(evt, "format") || eventField(evt, "location", "fldCCH17B42hKfQM9") || 'Online'}`
                                         : `Status: ${hlt.fldm41s0glSxCrw4Z ? 'Active' : 'Hidden'}`;
 
                                     return (
@@ -251,10 +323,10 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <button onClick={() => handleEdit(item)} className="p-3 bg-foreground/5 hover:bg-accent hover:text-black transition-all">
+                                                {can(activeTab === "events" ? "edit:events" : "edit:highlights") && <button onClick={() => handleEdit(item)} className="p-3 bg-foreground/5 hover:bg-accent hover:text-black transition-all">
                                                     <Edit3 size={16} />
-                                                </button>
-                                                <button
+                                                </button>}
+                                                {can("delete:content") && <button
                                                     onClick={async () => {
                                                         if (!confirm("Are you sure? This is permanent.")) return;
                                                         setLoading(true);
@@ -268,7 +340,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                     className="p-3 bg-foreground/5 hover:bg-red-500 hover:text-white transition-all text-red-500"
                                                 >
                                                     <Trash2 size={16} />
-                                                </button>
+                                                </button>}
                                             </div>
                                         </div>
                                     );
@@ -276,7 +348,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                             </div>
                         )}
 
-                        {activeTab === 'settings' && (
+                        {activeTab === 'settings' && can("manage:settings") && (
                             <form action={async (formData) => {
                                 setLoading(true); setMessage(null);
                                 const result = await updateSettings(Object.fromEntries(formData));
@@ -334,19 +406,27 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                     <>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Event Title</label>
-                                                            <input name="title" defaultValue={rec?.fld60g2Jlm4glr70e} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
+                                                            <input name="title" defaultValue={eventField(rec, "title", "fld60g2Jlm4glr70e")} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Slug</label>
-                                                            <input name="slug" defaultValue={rec?.fldfuCZ1yt5Hk0DZp} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
+                                                            <input name="slug" defaultValue={eventField(rec, "slug", "fldfuCZ1yt5Hk0DZp")} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Start Date</label>
-                                                            <input name="startDate" type="datetime-local" defaultValue={rec?.fldnqKLlla00mhERq?.substring(0, 16)} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
+                                                            <input name="startDate" type="datetime-local" defaultValue={eventField(rec, "startDate", "fldnqKLlla00mhERq").substring(0, 16)} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Location</label>
-                                                            <input name="location" defaultValue={rec?.fldCCH17B42hKfQM9} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
+                                                            <input name="location" defaultValue={eventField(rec, "location", "fldCCH17B42hKfQM9")} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
+                                                        </div>
+                                                        <div className="flex flex-col gap-3">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Session Number</label>
+                                                            <input name="sessionNumber" defaultValue={eventField(rec, "sessionNumber")} placeholder="01" className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
+                                                        </div>
+                                                        <div className="flex flex-col gap-3">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Format</label>
+                                                            <input name="format" defaultValue={eventField(rec, "format") || "Online"} placeholder="Online" className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" />
                                                         </div>
                                                     </>
                                                 );
@@ -383,17 +463,17 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                 </div>
 
                                 <div className="space-y-8">
-                                    <ImageUpload
+                                    {can("edit:media") && <ImageUpload
                                         label="Primary Asset"
                                         currentImage={uploadedImageUrl || undefined} // passed from state or derived
                                         onUploadComplete={(url) => setUploadedImageUrl(url)}
-                                    />
+                                    />}
 
                                     {/* Link Field is common-ish but keyed differently? No, kept as separate refs or check types */}
                                     {activeTab === 'events' ? (
                                         <div className="flex flex-col gap-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">External Link</label>
-                                            <input name="link" defaultValue={(editingRecord as ContentRecord<EventFields> | null)?.fld6Azz8y9qUZAXSx} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://..." />
+                                                            <input name="link" defaultValue={eventField(editingRecord as ContentRecord<EventFields> | null, "link", "fld6Azz8y9qUZAXSx")} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="Luma RSVP URL" />
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
@@ -410,24 +490,33 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                     <>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Tags</label>
-                                                            <input name="tags" defaultValue={rec?.fld3vQXMLYCgvuiYT?.join(', ')} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none" placeholder="Masterclass, Online" />
+                                                            <input name="tags" defaultValue={eventField(rec, "tags", "fld3vQXMLYCgvuiYT")} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none" placeholder="Masterclass, Online" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Short Description</label>
-                                                            <textarea name="shortDescription" defaultValue={rec?.fldfWdfSuxHY7iSbA} rows={2} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" placeholder="Brief summary for cards..." />
+                                                            <textarea name="shortDescription" defaultValue={eventField(rec, "shortDescription", "fldfWdfSuxHY7iSbA")} rows={2} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" placeholder="Brief summary for cards..." />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Learning Points (Comma Separated)</label>
-                                                            <textarea name="learningPoints" defaultValue={rec?.fldLearningPoints} rows={3} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" placeholder="Strategy 1, Strategy 2..." />
+                                                            <textarea name="learningPoints" defaultValue={eventField(rec, "learningPoints", "fldLearningPoints")} rows={3} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" placeholder="Strategy 1, Strategy 2..." />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Full Description</label>
-                                                            <textarea name="description" defaultValue={rec?.flddPxpiutxYsuYzL} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" />
+                                                            <textarea name="description" defaultValue={eventField(rec, "description", "flddPxpiutxYsuYzL")} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
-                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Speakers (JSON Array — avatar must be a Cloudinary URL)</label>
-                                                            <textarea name="speakers" defaultValue={rec?.fld61jNMCFHDGQ2Nq ? (typeof rec.fld61jNMCFHDGQ2Nq === 'string' ? rec.fld61jNMCFHDGQ2Nq : JSON.stringify(rec.fld61jNMCFHDGQ2Nq, null, 2)) : '[{"name": "", "role": "", "avatar": ""}]'} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground font-mono text-xs focus:outline-none resize-none" />
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Recording URL</label>
+                                                            <input name="recordingUrl" type="url" defaultValue={eventField(rec, "recordingUrl")} placeholder="https://youtube.com/watch?v=..." className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none" />
                                                         </div>
+                                                        <div className="flex flex-col gap-3">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">After-session notes</label>
+                                                            <textarea name="sessionNotes" defaultValue={eventField(rec, "sessionNotes")} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" placeholder="Notes and key takeaways, if available" />
+                                                        </div>
+                                                        <div className="flex flex-col gap-3">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Resources (one URL or note per line)</label>
+                                                            <textarea name="resources" defaultValue={eventField(rec, "resources")} rows={4} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none resize-none" placeholder="https://..." />
+                                                        </div>
+                                                        <SpeakerEditor initialValue={eventSpeakers(rec)} />
                                                     </>
                                                 );
                                             })()}
@@ -435,6 +524,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     )}
 
                                     <div className="flex gap-4 pt-10">
+                                        {activeTab === "events" && <button type="button" onClick={(event) => { const form = event.currentTarget.form; if (form) { const data = Object.fromEntries(new FormData(form)); window.open(`/events/preview?data=${encodeURIComponent(JSON.stringify(data))}`, "_blank", "noopener,noreferrer"); } }} className="btn-outline py-6 px-6">Preview</button>}
                                         <button disabled={loading} className="bg-accent text-black font-black uppercase tracking-widest py-6 px-10 flex-grow hover:scale-105 transition-all">
                                             {loading ? "Transmitting..." : (view === 'edit' ? "Synchronize Changes" : "Create Intelligence")}
                                         </button>

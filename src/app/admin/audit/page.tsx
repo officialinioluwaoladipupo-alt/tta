@@ -1,0 +1,17 @@
+import Link from "next/link";
+import { requireAdmin } from "@/lib/authorization";
+import { getAuditLogs } from "@/lib/audit-data";
+
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Audit Log", robots: { index: false, follow: false } };
+
+export default async function AuditPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await requireAdmin("page");
+  const params = await searchParams;
+  const value = (key: string) => typeof params[key] === "string" ? params[key] : undefined;
+  const page = Math.max(1, Number.parseInt(value("page") || "1", 10) || 1);
+  const filters = { actor: value("actor"), action: value("action"), contentType: value("contentType") };
+  const { rows, total } = await getAuditLogs(filters, page);
+  const query = (nextPage: number) => { const q = new URLSearchParams(); Object.entries(filters).forEach(([key, item]) => item && q.set(key, item)); q.set("page", String(nextPage)); return `?${q.toString()}`; };
+  return <main className="min-h-screen bg-background pt-32 pb-20 px-6"><div className="max-w-7xl mx-auto"><Link href="/dashboard" className="text-xs uppercase tracking-widest text-foreground/50">← Dashboard</Link><h1 className="text-5xl font-black uppercase tracking-tighter mt-10 mb-8">Audit Log</h1><form method="get" className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8"><input name="actor" defaultValue={filters.actor} placeholder="Actor email" className="p-3 bg-foreground/[0.03] border border-foreground/10" /><select name="action" defaultValue={filters.action || ""} className="p-3 bg-foreground/[0.03] border border-foreground/10"><option value="">All actions</option>{["create", "update", "delete", "export", "login_denied"].map((item) => <option key={item}>{item}</option>)}</select><input name="contentType" defaultValue={filters.contentType} placeholder="Content type" className="p-3 bg-foreground/[0.03] border border-foreground/10" /><button className="btn-primary">Filter</button></form><div className="overflow-x-auto"><table className="w-full text-left"><thead><tr className="border-b border-foreground/10 text-xs uppercase tracking-widest text-foreground/50"><th className="p-4">When</th><th className="p-4">Actor</th><th className="p-4">Action</th><th className="p-4">Content</th><th className="p-4">Changes</th></tr></thead><tbody>{rows.map((row) => <tr key={String(row.id)} className="border-b border-foreground/5 align-top"><td className="p-4 text-xs">{new Date(String(row.created_at)).toLocaleString()}</td><td className="p-4 text-sm">{String(row.actor_email || "Unknown")}</td><td className="p-4 text-xs uppercase">{String(row.action)}</td><td className="p-4 text-sm">{String(row.content_type)}<br /><span className="text-xs opacity-50">{String(row.record_id || "")}</span></td><td className="p-4"><pre className="text-xs whitespace-pre-wrap max-w-xl">{JSON.stringify(row.changes, null, 2)}</pre></td></tr>)}</tbody></table></div>{rows.length === 0 && <p className="border border-dashed border-foreground/20 p-10 text-center text-foreground/50">No audit entries match these filters.</p>}<div className="flex justify-between mt-8 text-sm"><span>{total} total · page {page} of {Math.max(1, Math.ceil(total / 50))}</span><div className="flex gap-3">{page > 1 && <Link href={query(page - 1)} className="btn-outline">Previous</Link>}{page < Math.ceil(total / 50) && <Link href={query(page + 1)} className="btn-outline">Next</Link>}</div></div></div></main>;
+}

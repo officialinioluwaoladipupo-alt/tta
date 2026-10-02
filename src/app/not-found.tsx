@@ -1,23 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ShieldAlert, ArrowLeft, Terminal } from "lucide-react";
 import GlitchText from "@/components/ui/GlitchText";
 
 export default function NotFound() {
-  const [decorElements, setDecorElements] = useState<{ x: number, duration: number, left: number }[]>([]);
-
-  useEffect(() => {
-    const elements = Array.from({ length: 20 }).map(() => ({
-      x: Math.random() * 100,
-      duration: 10 + Math.random() * 20,
-      left: Math.random() * 100,
-    }));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDecorElements(elements);
-  }, []);
+  const decorElements = Array.from({ length: 20 }, (_, index) => ({
+    x: (index * 47) % 100,
+    duration: 10 + ((index * 13) % 20),
+    left: (index * 29) % 100,
+  }));
 
   return (
     <div className="bg-background min-h-screen text-foreground flex flex-col items-center justify-center p-6 overflow-hidden relative">

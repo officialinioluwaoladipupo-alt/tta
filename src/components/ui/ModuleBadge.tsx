@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 
 export function ModuleBadge({ title, label, border = true }: { title: string, label: string, border?: boolean }) {
   return (

@@ -1,7 +1,7 @@
-import CommunityJoinForm from "@/components/forms/CommunityJoinForm";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, MoveUpRight, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
+import TallyPopupButton from "@/components/ui/TallyPopupButton";
 
 export const metadata: Metadata = {
     title: "Join the Community - The Thinking Architect",
@@ -53,9 +53,28 @@ export default function JoinPage() {
                         </div>
                     </div>
 
-                    {/* Right Column: Form */}
-                    <div className="lg:col-span-7 lg:pl-12">
-                        <CommunityJoinForm />
+                    {/* Open Tally's dark popup form, matching the supplied reference. */}
+                    <div className="lg:col-span-7 lg:pl-12 flex items-start lg:pt-20">
+                        <TallyPopupButton className="group relative w-full max-w-2xl overflow-hidden border border-[#2b2b2b]/15 bg-[#ebe7e1] p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_70px_rgba(43,43,43,0.12)] sm:p-10">
+                            <span className="absolute -right-8 -top-12 h-48 w-48 rounded-full border border-accent/20 transition-transform duration-500 group-hover:scale-125" aria-hidden="true" />
+                            <span className="absolute -right-1 top-8 h-32 w-32 rounded-full border border-accent/20 transition-transform duration-500 group-hover:scale-110" aria-hidden="true" />
+                            <span className="relative flex items-center justify-between gap-6">
+                                <span>
+                                    <span className="mb-8 flex h-12 w-12 items-center justify-center bg-accent text-white">
+                                        <UsersRound size={22} strokeWidth={1.8} />
+                                    </span>
+                                    <span className="block text-xs font-black uppercase tracking-[0.2em] text-accent">Your next conversation starts here</span>
+                                    <span className="mt-3 block max-w-md text-3xl font-black uppercase leading-[0.95] tracking-tight text-foreground sm:text-5xl">Pull up a seat.</span>
+                                    <span className="mt-4 block text-sm font-medium text-foreground/60">A thoughtful community for the people shaping architecture.</span>
+                                </span>
+                                <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-all duration-300 group-hover:rotate-45 group-hover:bg-foreground" aria-hidden="true">
+                                    <MoveUpRight size={24} />
+                                </span>
+                            </span>
+                            <span className="relative mt-8 flex items-center gap-3 border-t border-foreground/10 pt-5 text-xs font-black uppercase tracking-[0.18em] text-foreground/55">
+                                Open the join form <ArrowRight size={15} className="text-accent transition-transform group-hover:translate-x-2" />
+                            </span>
+                        </TallyPopupButton>
                     </div>
 
                 </div>

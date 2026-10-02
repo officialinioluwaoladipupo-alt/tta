@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Lock, Box, Layers } from "lucide-react";
 
-export default function ProgramListClient({ programs }: { programs: any[] }) {
+interface ProgramListItem { slug: string; title: string; status: string; featured?: boolean; description?: string }
+
+export default function ProgramListClient({ programs }: { programs: ProgramListItem[] }) {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -51,7 +53,7 @@ export default function ProgramListClient({ programs }: { programs: any[] }) {
           {/* Header */}
           <div className="relative z-10 flex justify-between items-start">
              <div className="p-4 bg-foreground/5 text-foreground/40 group-hover:text-accent group-hover:bg-accent/10 transition-all rounded-sm">
-                {getProgramIcon(program.title || "", program.featured)}
+                {getProgramIcon(program.title, Boolean(program.featured))}
              </div>
              <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] border ${program.featured ? 'border-accent text-accent bg-accent/5' : 'border-foreground/10 text-foreground/40'}`}>
                 {program.status}

@@ -1,177 +1,150 @@
-import { getEventBySlug } from "@/lib/event-data";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { Calendar, Clock, MapPin, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import EventRegistrationForm from "@/components/events/EventRegistrationForm";
-import { Metadata } from "next";
+import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Clock3, ExternalLink, MapPin, MessageCircle, Play } from "lucide-react";
+import { getEventBySlug } from "@/lib/event-data";
+import TallyPopupButton from "@/components/ui/TallyPopupButton";
 
-type Props = {
-    params: Promise<{ slug: string }>;
-};
+type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { slug } = await params;
-    const event = await getEventBySlug(slug);
-    if (!event) return { title: "Event Not Found" };
+  const { slug } = await params;
+  const event = await getEventBySlug(slug);
+  if (!event) return { title: "Session not found | The Thinking Architect" };
+  return {
+    title: `${event.title} | Think Sessions | TTA`,
+    description: event.seoDescription || event.shortDescription || event.description,
+    openGraph: { images: event.seoImage ? [{ url: event.seoImage }] : undefined },
+  };
+}
 
-    return {
-        title: `${event.title} - TTA Events`,
-        description: event.seoDescription || event.shortDescription || event.description,
-        openGraph: {
-            images: event.seoImage ? [{ url: event.seoImage }] : undefined,
-        }
-    };
+function isWebUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 export default async function EventPage({ params }: Props) {
-    const { slug } = await params;
-    const event = await getEventBySlug(slug);
+  const { slug } = await params;
+  const event = await getEventBySlug(slug);
+  if (!event) notFound();
 
-    if (!event) {
-        notFound();
-    }
+  const isPast = event.status === "past";
+  const questionContext = {
+    slug: event.slug,
+    title: event.title,
+    number: event.sessionNumber || "",
+    speakers: event.speakers?.map((speaker) => speaker.name).join(", ") || "",
+  };
 
-    return (
-        <main className="min-h-screen bg-background pt-32 pb-20">
-            <div className="max-w-[1600px] mx-auto px-6">
+  return (
+    <main className="min-h-screen bg-background pb-24 pt-32 text-foreground">
+      <div className="mx-auto max-w-[1440px] px-6">
+        <Link href="/events" className="mb-9 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground/50 transition-colors hover:text-accent"><ArrowLeft size={16} /> All Think Sessions</Link>
 
-                {/* Back Link */}
-                <Link href="/events" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-foreground/50 hover:text-accent mb-8 transition-colors">
-                    <ArrowLeft size={16} /> Back to Schedule
-                </Link>
+        <header className="grid gap-10 border-b border-foreground/10 pb-12 md:grid-cols-[1fr_auto] md:items-end md:pb-16">
+          <div>
+            <p className="mb-5 text-xs font-black uppercase tracking-[0.22em] text-accent">{event.sessionNumber ? `Think Session ${event.sessionNumber}` : "Think Session"} · {isPast ? "Recording and notes" : "Upcoming conversation"}</p>
+            <h1 className="max-w-5xl text-5xl font-black uppercase leading-[0.86] tracking-[-0.06em] sm:text-7xl md:text-8xl">{event.title}</h1>
+          </div>
+          {isPast && event.recordingUrl ? (
+            <a href={event.recordingUrl} target="_blank" rel="noreferrer" className="btn-primary min-h-14 justify-center px-6">Watch the recording <Play size={17} fill="currentColor" /></a>
+          ) : !isPast && event.link ? (
+            <a href={event.link} target="_blank" rel="noreferrer" className="btn-primary min-h-14 justify-center px-6">RSVP on Luma <ArrowUpRight size={17} /></a>
+          ) : (
+            <span className="border border-foreground/15 px-5 py-4 text-xs font-bold text-foreground/50">{isPast ? "Recording not published yet" : "RSVP details coming soon"}</span>
+          )}
+        </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 relative">
+        {event.image && (
+          <div className="relative mt-10 aspect-[16/7] overflow-hidden bg-foreground/5">
+            <Image src={event.image} alt="" fill className="object-cover" priority sizes="100vw" />
+          </div>
+        )}
 
-                    {/* Left Content */}
-                    <div className="lg:col-span-8">
-
-                        {/* Hero Image */}
-                        <div className="relative aspect-video w-full overflow-hidden bg-foreground/5 mb-12 border border-foreground/10">
-                            <Image
-                                src={event.image}
-                                alt={event.title}
-                                fill
-                                className="object-cover"
-                                priority
-                            />
-                        </div>
-
-                        {/* Title & Metadata */}
-                        <div className="mb-12">
-                            <div className="flex flex-wrap gap-4 mb-6">
-                                {event.tags.map(tag => (
-                                    <span key={tag} className="bg-accent/10 text-accent px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-
-                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.9] text-foreground mb-8">
-                                {event.title}
-                            </h1>
-
-                            <div className="flex flex-col md:flex-row gap-8 md:gap-16 border-y border-foreground/10 py-6">
-                                <div className="flex items-center gap-3">
-                                    <Calendar className="text-accent" size={20} />
-                                    <div>
-                                        <span className="block text-[10px] uppercase font-bold text-foreground/40 tracking-widest">Date</span>
-                                        <span className="font-bold text-foreground">{event.displayDate}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Clock className="text-accent" size={20} />
-                                    <div>
-                                        <span className="block text-[10px] uppercase font-bold text-foreground/40 tracking-widest">Time</span>
-                                        <span className="font-bold text-foreground">{event.time}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <MapPin className="text-accent" size={20} />
-                                    <div>
-                                        <span className="block text-[10px] uppercase font-bold text-foreground/40 tracking-widest">Location</span>
-                                        <span className="font-bold text-foreground">{event.location}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Description */}
-                        <div className="prose prose-lg prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight max-w-none text-foreground/80">
-                            <p className="text-xl leading-relaxed text-foreground font-medium mb-8">
-                                {event.description}
-                            </p>
-
-                            {event.learningPoints && event.learningPoints.length > 0 && (
-                                <div className="bg-foreground/5 p-8 border-l-4 border-accent my-8">
-                                    <h3 className="text-lg font-black uppercase tracking-widest mb-4">What you will learn</h3>
-                                    <ul className="space-y-4 list-none p-0 m-0">
-                                        {event.learningPoints.map((point, i) => (
-                                            <li key={i} className="flex gap-4 items-start">
-                                                <span className="w-2 h-2 bg-accent rounded-full mt-2 shrink-0" />
-                                                <span className="text-foreground/90 font-medium">{point}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Speakers */}
-                        {event.speakers && event.speakers.length > 0 && (
-                            <div className="mt-16 pt-16 border-t border-foreground/10">
-                                <h3 className="text-sm font-black uppercase tracking-[0.3em] text-foreground/40 mb-8">Speakers</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                    {event.speakers.map((speaker, i) => (
-                                        <div key={i} className="flex items-center gap-6 group">
-                                            <div className="w-20 h-20 bg-foreground/10 rounded-full overflow-hidden relative border-2 border-transparent group-hover:border-accent transition-colors">
-                                                {speaker.avatar ? (
-                                                    <Image
-                                                        src={speaker.avatar}
-                                                        alt={speaker.name}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center text-foreground/30 font-black text-2xl">
-                                                        {speaker.name[0]}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-black text-xl uppercase tracking-tighter text-foreground group-hover:text-accent transition-colors">
-                                                    {speaker.name}
-                                                </h4>
-                                                <p className="text-xs text-foreground/50 font-bold uppercase tracking-[0.2em] mt-1">
-                                                    {speaker.role}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
-
-                    {/* Right Sidebar: Registration - Sticky */}
-                    <div className="lg:col-span-4 lg:relative">
-                        <div className="lg:sticky lg:top-32">
-                            {event.link ? (
-                                <a href={event.link} target="_blank" rel="noreferrer" className="btn-primary w-full justify-center">Reserve Your Spot →</a>
-                            ) : (
-                                <EventRegistrationForm
-                                    eventId={event.id}
-                                    eventTitle={event.title}
-                                    eventDate={event.date}
-                                    customFields={event.formFields}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                </div>
+        <section className="grid gap-12 py-12 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20 lg:py-16">
+          <div className="grid content-start gap-5 sm:grid-cols-2 lg:grid-cols-1">
+            <MetaItem icon={<CalendarDays size={18} />} label="Date" value={event.displayDate} />
+            <MetaItem icon={<Clock3 size={18} />} label="Time" value={event.time} />
+            <MetaItem icon={<MessageCircle size={18} />} label="Format" value={event.format} />
+            {event.location && event.location !== event.format && <MetaItem icon={<MapPin size={18} />} label="Location" value={event.location} />}
+          </div>
+          <div>
+            <p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-accent">About this session</p>
+            <div className="max-w-4xl space-y-5 text-lg leading-relaxed text-foreground/70 md:text-xl">
+              {(event.description || "More details about this conversation will be shared soon.").split(/\n\s*\n/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
             </div>
-        </main>
-    );
+            {event.shortDescription && <p className="mt-6 max-w-4xl border-l-2 border-accent pl-5 font-semibold leading-relaxed text-foreground">{event.shortDescription}</p>}
+          </div>
+        </section>
+
+        {event.speakers && event.speakers.length > 0 && (
+          <section className="border-t border-foreground/10 py-12 md:py-16">
+            <p className="mb-8 text-xs font-black uppercase tracking-[0.22em] text-accent">The people in the room</p>
+            <h2 className="mb-8 text-3xl font-black uppercase tracking-tight md:text-5xl">Speakers</h2>
+            <div className="grid gap-5 md:grid-cols-2">
+              {event.speakers.map((speaker, index) => (
+                <article key={speaker.id || `${speaker.name}-${index}`} className="grid gap-5 border border-foreground/10 p-5 sm:grid-cols-[8rem_1fr] sm:gap-7 sm:p-7">
+                  <div className="relative aspect-square w-full overflow-hidden bg-[#ebe7e1] sm:w-32">
+                    {speaker.avatar ? <Image src={speaker.avatar} alt={speaker.name} fill sizes="128px" className="object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-4xl font-black text-accent">{speaker.name?.slice(0, 1) || "?"}</div>}
+                  </div>
+                  <div className="self-center">
+                    <h3 className="text-2xl font-black uppercase leading-tight tracking-tight">{speaker.name}</h3>
+                    {(speaker.role || speaker.title || speaker.organization) && <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-accent">{[speaker.role || speaker.title, speaker.organization].filter(Boolean).join(" · ")}</p>}
+                    {speaker.bio && <p className="mt-4 leading-relaxed text-foreground/65">{speaker.bio}</p>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {!isPast && (
+          <section className="border-y border-foreground/10 bg-[#ebe7e1] py-10 md:py-14">
+            <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-[0.22em] text-accent">Before the session</p>
+                <h2 className="text-2xl font-black uppercase tracking-tight sm:text-3xl">Ask before the conversation.</h2>
+                <p className="mt-3 max-w-2xl leading-relaxed text-foreground/65">What do you want to hear from {event.speakers?.[0]?.name || "our speakers"}? Send your question ahead of time.</p>
+              </div>
+              <TallyPopupButton formId="MeB2NX" sessionContext={questionContext} thankYouMessage="Thank you. Your question is with us, and we will bring it to the next conversation." className="btn-outline min-h-14 justify-center px-6">Send a question <ArrowRight size={17} /></TallyPopupButton>
+            </div>
+          </section>
+        )}
+
+        {isPast && (event.sessionNotes || event.resources.length > 0) && (
+          <section className="border-t border-foreground/10 py-12 md:py-16">
+            <p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-accent">After the session</p>
+            <h2 className="mb-6 text-3xl font-black uppercase tracking-tight md:text-5xl">Notes, links and resources</h2>
+            {event.sessionNotes && <p className="max-w-4xl whitespace-pre-line text-lg leading-relaxed text-foreground/70">{event.sessionNotes}</p>}
+            {event.resources.length > 0 && <ul className="mt-6 grid gap-3 sm:grid-cols-2">{event.resources.map((resource, index) => <li key={`${resource}-${index}`}>{isWebUrl(resource) ? <a href={resource} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-bold text-accent hover:text-foreground">Resource {index + 1} <ExternalLink size={15} /></a> : <span className="text-foreground/70">{resource}</span>}</li>)}</ul>}
+          </section>
+        )}
+
+        <section className="mt-10 border-y border-foreground/10 py-12 text-center md:py-16">
+          <p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-accent">A question for the next conversation?</p>
+          <h2 className="text-3xl font-black uppercase tracking-tight sm:text-5xl">Bring the question you are carrying.</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-foreground/60 md:text-lg">Ask what you have been wondering about. We pass questions to the speakers, and no question is too basic.</p>
+          <TallyPopupButton formId="MeB2NX" sessionContext={questionContext} thankYouMessage="Thank you. Your question is with us, and we will bring it to the next conversation." className="btn-primary mx-auto mt-7 min-h-14 justify-center px-7">Send a question <ArrowRight size={17} /></TallyPopupButton>
+        </section>
+
+        <section className="pt-12 text-center md:pt-16">
+          <h2 className="text-3xl font-black uppercase tracking-tight sm:text-5xl">Don&apos;t miss the next one.</h2>
+          <p className="mx-auto mt-4 max-w-xl text-foreground/60">Join the community to hear first.</p>
+          <a href="https://chat.whatsapp.com/CH4I9YLQ7tSJY4RFliOwpO" target="_blank" rel="noreferrer" className="btn-outline mx-auto mt-7 min-h-14 justify-center px-7">Join on WhatsApp <ArrowRight size={17} /></a>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return <div className="flex items-start gap-3 border-b border-foreground/10 pb-4">
+    <span className="mt-1 text-accent">{icon}</span>
+    <div><span className="block text-[10px] font-black uppercase tracking-widest text-foreground/40">{label}</span><span className="mt-1 block font-bold">{value}</span></div>
+  </div>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, Variants } from "framer-motion";
+import { motion, useInView, type Variants } from "framer-motion";
 import { useRef } from "react";
 
 interface GlitchTextProps {
@@ -16,14 +16,6 @@ export default function GlitchText({ text, className = "", as: Component = "span
 
   const words = text.split(" ");
   let charIndex = 0;
-
-  const container: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.03 }, // Keep simple stagger if possible, or use manual delay below
-    },
-  };
 
   const child: Variants = {
     hidden: {

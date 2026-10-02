@@ -3,12 +3,11 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Instagram, Twitter } from "lucide-react";
+import type { GlobalSettings } from "@/lib/mdx";
 
-export default function Footer({ settings }: { settings?: Record<string, unknown> }) {
-  const siteName = typeof settings?.siteName === "string" ? settings.siteName : "THE THINKING ARCHITECT";
-  const footerMarqueeText = typeof settings?.footerMarqueeText === "string"
-    ? settings.footerMarqueeText
-    : siteName || "TTA";
+export default function Footer({ settings }: { settings?: GlobalSettings }) {
+  const siteName = settings?.siteName || "THE THINKING ARCHITECT";
+  const footerMarqueeText = settings?.footerMarqueeText || siteName || "TTA";
   return (
     <footer className="bg-background text-foreground relative overflow-hidden border-t border-dark/5">
       <div className="absolute top-10 left-0 w-full opacity-[0.05] select-none pointer-events-none flex whitespace-nowrap overflow-hidden">
@@ -74,7 +73,8 @@ export default function Footer({ settings }: { settings?: Record<string, unknown
         </div>
 
         <div className="mt-20 border-y border-foreground/10 py-10">
-          <p className="text-xl font-bold tracking-tight mb-5">Get Think Session dates and community news first.</p>
+          <h2 className="text-3xl font-black uppercase tracking-tight mb-3 md:text-5xl">Think it through with us.</h2>
+          <p className="text-base text-foreground/60 mb-7">New stories, conversations and session dates, first.</p>
           <form className="flex flex-col sm:flex-row gap-3 max-w-2xl" action="/api/newsletter" method="post">
             <label htmlFor="footer-newsletter-email" className="sr-only">Email address</label>
             <input

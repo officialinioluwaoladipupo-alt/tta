@@ -1,4 +1,5 @@
 import { queryContent, getImageUrl } from "@/lib/content-data";
+import type { ContentRecord } from "@/lib/content-data";
 
 export interface FormField {
     name: string;
@@ -12,8 +13,13 @@ export interface FormField {
 export interface Speaker {
     id: string;
     name: string;
-    role: string;
-    avatar: string;
+    role?: string;
+    organization?: string;
+    title?: string;
+    topic?: string;
+    bio?: string;
+    avatar?: string;
+    publicId?: string;
 }
 
 export interface Event {
@@ -22,6 +28,11 @@ export interface Event {
     title: string;
     description: string;
     shortDescription?: string;
+    sessionNumber?: string;
+    format: string;
+    recordingUrl?: string;
+    sessionNotes?: string;
+    resources: string[];
     date: string; // ISO string for sorting
     displayDate: string; // "Feb 12, 2026"
     time: string; // "19:00"
@@ -38,8 +49,9 @@ export interface Event {
 }
 
 // Map stored content to the public Event interface.
-function mapContentEvent(record: any): Event {
-    const dateValue = record.date || record.startDate;
+function mapContentEvent(record: ContentRecord): Event {
+    const readString = (key: string, fallback = "") => typeof record[key] === "string" ? record[key] as string : fallback;
+    const dateValue = readString("date", readString("startDate", new Date().toISOString()));
     const dateObj = new Date(dateValue);
     const displayDate = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const time = dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -49,11 +61,12 @@ function mapContentEvent(record: any): Event {
     try {
         const speakersVal = record.speakers;
         if (typeof speakersVal === "string") {
-            speakers = JSON.parse(speakersVal);
+            const parsed: unknown = JSON.parse(speakersVal);
+            speakers = Array.isArray(parsed) ? parsed.filter((speaker): speaker is Speaker => typeof speaker === "object" && speaker !== null && "name" in speaker) : [];
         } else if (Array.isArray(speakersVal)) {
-            speakers = speakersVal;
+            speakers = speakersVal.filter((speaker): speaker is Speaker => typeof speaker === "object" && speaker !== null && "name" in speaker);
         }
-    } catch (e) {
+    } catch {
         console.warn("Failed to parse speakers for event:", record.id);
     }
 
@@ -62,11 +75,12 @@ function mapContentEvent(record: any): Event {
     try {
         const fieldsVal = record.formFields;
         if (typeof fieldsVal === "string") {
-            formFields = JSON.parse(fieldsVal);
+            const parsed: unknown = JSON.parse(fieldsVal);
+            formFields = Array.isArray(parsed) ? parsed.filter((field): field is FormField => typeof field === "object" && field !== null && "name" in field && "label" in field) : [];
         } else if (Array.isArray(fieldsVal)) {
-            formFields = fieldsVal;
+            formFields = fieldsVal.filter((field): field is FormField => typeof field === "object" && field !== null && "name" in field && "label" in field);
         }
-    } catch (e) {
+    } catch {
         console.warn("Failed to parse formFields for event:", record.id);
     }
 
@@ -77,31 +91,36 @@ function mapContentEvent(record: any): Event {
         if (typeof lpVal === "string") {
             learningPoints = lpVal.split(/\n|,/).map(p => p.trim()).filter(p => p);
         } else if (Array.isArray(lpVal)) {
-            learningPoints = lpVal;
+            learningPoints = lpVal.filter((point): point is string => typeof point === "string");
         }
-    } catch (e) {
+    } catch {
         console.warn("Failed to parse learning points for event:", record.id);
     }
 
     return {
         id: record.id,
-        slug: record.slug,
-        title: record.title,
-        description: record.description || "",
-        shortDescription: record.shortDescription || "",
+        slug: readString("slug", record.id),
+        title: readString("title", "Untitled session"),
+        description: readString("description"),
+        shortDescription: readString("shortDescription"),
+        sessionNumber: readString("sessionNumber") || undefined,
+        format: readString("format", readString("location", "Online")),
+        recordingUrl: readString("recordingUrl") || undefined,
+        sessionNotes: readString("sessionNotes") || undefined,
+        resources: readString("resources").split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
         date: dateValue,
         displayDate,
         time: `${time} WAT`,
-        location: record.location || "Online",
+        location: readString("location", "Online"),
         link: typeof record.link === "string" ? record.link : undefined,
-        image: record.image || getImageUrl(record.image) || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
-        tags: record.tags ? (typeof record.tags === 'string' ? record.tags.split(',') : record.tags) : ["Masterclass"],
-        status: record.status || "upcoming",
+        image: readString("image") || getImageUrl(record.image) || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
+        tags: typeof record.tags === "string" ? record.tags.split(",") : Array.isArray(record.tags) ? record.tags.filter((tag): tag is string => typeof tag === "string") : ["Masterclass"],
+        status: record.status === "past" || dateObj < new Date() ? "past" : record.status === "full" ? "full" : "upcoming",
         speakers,
         formFields,
         learningPoints,
         seoImage: getImageUrl(record.seoImage),
-        seoDescription: record.seoDescription
+        seoDescription: readString("seoDescription") || undefined
     };
 }
 
@@ -113,12 +132,12 @@ export async function getUpcomingEvents(): Promise<Event[]> {
     const now = new Date();
 
     return records
+        .filter(isPublicEventRecord)
         .map(mapContentEvent)
         .filter(event => {
             const eventDate = new Date(event.date);
             // Show events that are today or in the future
-            const isFutureOrToday = eventDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            return isFutureOrToday && event.status !== "past";
+            return eventDate >= now && event.status !== "past";
         });
 }
 
@@ -126,6 +145,7 @@ export async function getPastEvents(): Promise<Event[]> {
     const records = await queryContent("events");
     const today = new Date();
     return records
+        .filter(isPublicEventRecord)
         .map(mapContentEvent)
         .filter((event) => new Date(event.date) < today || event.status === "past")
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -134,8 +154,15 @@ export async function getPastEvents(): Promise<Event[]> {
 export async function getEventBySlug(slug: string): Promise<Event | undefined> {
     const records = await queryContent("events");
 
-    const record = records.find((r: any) => r.slug === slug);
+    const record = records.find((r) => r.slug === slug || r.id === slug);
     if (!record) return undefined;
 
+    if (!isPublicEventRecord(record)) return undefined;
+
     return mapContentEvent(record);
+}
+
+function isPublicEventRecord(record: ContentRecord) {
+    const status = typeof record.status === "string" ? record.status.toLowerCase() : "";
+    return record.isPublished !== false && record.published !== false && status !== "draft" && status !== "unpublished";
 }

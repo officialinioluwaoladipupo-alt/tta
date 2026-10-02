@@ -7,11 +7,7 @@ import { saveSubmission } from "@/lib/cms-actions";
 
 type SuccessType = "WHATSAPP" | "DISCORD" | null;
 
-interface CommunityJoinFormProps {
-    onClose?: () => void;
-}
-
-export default function CommunityJoinForm({ onClose }: CommunityJoinFormProps = {}) {
+export default function CommunityJoinForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successType, setSuccessType] = useState<SuccessType>(null);
     const [errorStatus, setErrorStatus] = useState<string | null>(null);

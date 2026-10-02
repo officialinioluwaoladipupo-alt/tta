@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import CommunityJoinForm from "./CommunityJoinForm";
 
@@ -10,25 +10,10 @@ interface CommunityJoinModalProps {
 }
 
 export default function CommunityJoinModal({ isOpen, onClose }: CommunityJoinModalProps) {
-    const [isAnimating, setIsAnimating] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            setIsAnimating(true);
-            // Prevent body scroll when modal is open
-            document.body.style.overflow = "hidden";
-        } else {
-            // Re-enable body scroll
-            document.body.style.overflow = "unset";
-        }
-
-        return () => {
-            document.body.style.overflow = "unset";
-        };
-    }, [isOpen]);
+    const [isClosing, setIsClosing] = useState(false);
 
     const handleClose = () => {
-        setIsAnimating(false);
+        setIsClosing(true);
         setTimeout(() => {
             onClose();
         }, 200);
@@ -40,11 +25,11 @@ export default function CommunityJoinModal({ isOpen, onClose }: CommunityJoinMod
         }
     };
 
-    if (!isOpen && !isAnimating) return null;
+    if (!isOpen) return null;
 
     return (
         <div
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${isAnimating && isOpen ? "opacity-100" : "opacity-0"
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${isClosing ? "opacity-0" : "opacity-100"
                 }`}
             onClick={handleBackdropClick}
         >
@@ -53,7 +38,7 @@ export default function CommunityJoinModal({ isOpen, onClose }: CommunityJoinMod
 
             {/* Modal */}
             <div
-                className={`relative w-full max-w-lg bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 ${isAnimating && isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
+                className={`relative w-full max-w-lg bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 ${isClosing ? "scale-95 translate-y-4" : "scale-100 translate-y-0"
                     }`}
             >
                 {/* Gradient overlay */}
@@ -85,7 +70,7 @@ export default function CommunityJoinModal({ isOpen, onClose }: CommunityJoinMod
 
                 {/* Form content */}
                 <div className="relative px-6 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    <CommunityJoinForm onClose={handleClose} />
+                    <CommunityJoinForm />
                 </div>
             </div>
         </div>

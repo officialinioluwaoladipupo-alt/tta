@@ -10,6 +10,7 @@ import CommandPalette from "@/components/ui/CommandPalette";
 import Preloader from "@/components/ui/Preloader";
 import NoiseBackground from "@/components/visuals/NoiseBackground";
 import Script from "next/script";
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,16 +35,17 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteName = settings?.siteName || "The Thinking Architect";
   const title = settings?.siteName || "The Thinking Architect | TTA";
   const description = settings?.siteDescription || "An authority signal and gateway to TTA platforms. Calm, Intentional, Durable.";
-  const ogImage = settings?.defaultSeoImage || "https://tta.foundation/og.png";
+  const ogImage = settings?.defaultSeoImage || `${SITE_URL}/icon.svg`;
 
   return {
+    metadataBase: new URL(SITE_URL),
     title,
     description,
     keywords: ["Architecture", "Education", "TTA", "Design", "Theory", "Professional Practice"],
     openGraph: {
       title,
       description,
-      url: "https://tta.foundation",
+      url: SITE_URL,
       siteName,
       images: [
         {
@@ -55,6 +57,9 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
       locale: "en_US",
       type: "website",
+    },
+    alternates: {
+      canonical: SITE_URL,
     },
     twitter: {
       card: "summary_large_image",
@@ -79,7 +84,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <Script src="https://tally.so/widgets/embed.js" strategy="lazyOnload" />
+      <Script src="https://tally.so/widgets/embed.js" strategy="afterInteractive" />
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${museoModerno.variable} antialiased`}
       >

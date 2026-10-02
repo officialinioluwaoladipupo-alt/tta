@@ -1,3 +1,21 @@
+interface YouTubeApiItem {
+  id?: string | { videoId?: string };
+  snippet?: {
+    title?: string;
+    channelId?: string;
+    channelTitle?: string;
+    publishedAt?: string;
+    description?: string;
+    thumbnails?: Record<string, { url?: string }>;
+    resourceId?: { videoId?: string };
+    topLevelComment?: { snippet?: { authorDisplayName?: string; authorProfileImageUrl?: string; textDisplay?: string; likeCount?: string; publishedAt?: string } };
+    tags?: string[];
+  };
+  contentDetails?: { itemCount?: number; duration?: string };
+  statistics?: { viewCount?: string; likeCount?: string; commentCount?: string; subscriberCount?: string; videoCount?: string };
+}
+
+interface YouTubeApiResponse { items?: YouTubeApiItem[]; nextPageToken?: string }
 export interface ChannelStats {
   subscriberCount: string;
   viewCount: string;
@@ -16,6 +34,7 @@ export interface Video {
   commentCount?: string;
   tags?: string[];
   channelTitle?: string;
+  speaker?: string;
 }
 
 export interface Playlist {
@@ -37,6 +56,7 @@ export interface Comment {
 export interface PaginatedResult<T> {
   items: T[];
   nextPageToken?: string;
+  status?: "ok" | "empty" | "error";
 }
 
 const DEFAULT_PLAYLIST_ID = "PLz-iC_fRiLMdfF41hmf3wEdIeTKd5tEhF";
@@ -72,6 +92,12 @@ function formatViews(views: string): string {
   return v.toString();
 }
 
+function extractSpeaker(description = "", title = "") {
+  const descriptionMatch = description.match(/^\s*(?:speaker|guest|featuring|with)\s*[:\-]\s*([^\r\n|]+)/im);
+  const titleMatch = title.match(/\b(?:with|featuring)\s+([^|–—-]+)/i);
+  return (descriptionMatch?.[1] || titleMatch?.[1] || "").trim() || undefined;
+}
+
 async function getChannelId(): Promise<string | null> {
   if (CACHED_CHANNEL_ID) return CACHED_CHANNEL_ID;
   if (!API_KEY) return null;
@@ -80,9 +106,10 @@ async function getChannelId(): Promise<string | null> {
     const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=1&playlistId=${DEFAULT_PLAYLIST_ID}&key=${API_KEY}`;
     const res = await fetch(playlistUrl, { next: { revalidate: 3600 } });
     if (!res.ok) return null;
-    const data = await res.json();
-    if (data.items && data.items.length > 0) {
-      CACHED_CHANNEL_ID = data.items[0].snippet.channelId;
+    const data = await res.json() as YouTubeApiResponse;
+    const channelId = data.items?.[0]?.snippet?.channelId;
+    if (channelId) {
+      CACHED_CHANNEL_ID = channelId;
       return CACHED_CHANNEL_ID;
     }
   } catch (e) {
@@ -101,8 +128,8 @@ export async function getLiveStatus(): Promise<boolean> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${API_KEY}`;
     const res = await fetch(url, { next: { revalidate: 300 } }); // Cache 5 mins
-    const data = await res.json();
-    return data.items && data.items.length > 0;
+    const data = await res.json() as YouTubeApiResponse;
+    return Boolean(data.items?.length);
   } catch (e) {
     console.error("Failed to check live status", e);
     return false;
@@ -117,14 +144,14 @@ export async function getChannelStats(): Promise<ChannelStats | null> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${API_KEY}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
-    const data = await res.json();
+    const data = await res.json() as YouTubeApiResponse;
 
-    if (data.items && data.items.length > 0) {
-      const stats = data.items[0].statistics;
+    const stats = data.items?.[0]?.statistics;
+    if (stats) {
       return {
-        subscriberCount: formatViews(stats.subscriberCount),
-        viewCount: formatViews(stats.viewCount),
-        videoCount: stats.videoCount
+        subscriberCount: formatViews(stats.subscriberCount ?? "0"),
+        viewCount: formatViews(stats.viewCount ?? "0"),
+        videoCount: stats.videoCount ?? "0"
       };
     }
     return null;
@@ -142,13 +169,13 @@ export async function getChannelPlaylists(): Promise<Playlist[]> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=20&key=${API_KEY}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
-    const data = await res.json();
+    const data = await res.json() as YouTubeApiResponse;
 
-    return (data.items || []).map((item: any) => ({
-      id: item.id,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails?.medium?.url || "",
-      itemCount: item.contentDetails.itemCount
+    return (data.items || []).map((item) => ({
+      id: typeof item.id === "string" ? item.id : "",
+      title: item.snippet?.title ?? "Untitled playlist",
+      thumbnail: item.snippet?.thumbnails?.medium?.url || "",
+      itemCount: item.contentDetails?.itemCount ?? 0
     }));
   } catch (e) {
     console.error("Failed to fetch playlists", e);
@@ -162,17 +189,17 @@ export async function getVideoComments(videoId: string): Promise<Comment[]> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=3&order=relevance&key=${API_KEY}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
-    const data = await res.json();
+    const data = await res.json() as YouTubeApiResponse;
 
-    return (data.items || []).map((item: any) => {
-      const snippet = item.snippet.topLevelComment.snippet;
+    return (data.items || []).map((item) => {
+      const snippet = item.snippet?.topLevelComment?.snippet;
       return {
-        id: item.id,
-        author: snippet.authorDisplayName,
-        avatar: snippet.authorProfileImageUrl,
-        text: snippet.textDisplay,
-        likes: formatViews(snippet.likeCount),
-        date: new Date(snippet.publishedAt).toLocaleDateString()
+        id: typeof item.id === "string" ? item.id : "",
+        author: snippet?.authorDisplayName ?? "YouTube user",
+        avatar: snippet?.authorProfileImageUrl ?? "",
+        text: snippet?.textDisplay ?? "",
+        likes: formatViews(snippet?.likeCount ?? "0"),
+        date: snippet?.publishedAt ? new Date(snippet.publishedAt).toLocaleDateString() : ""
       };
     });
   } catch (e) {
@@ -181,38 +208,41 @@ export async function getVideoComments(videoId: string): Promise<Comment[]> {
   }
 }
 
-export async function searchVideos(query: string): Promise<Video[]> {
-  if (!API_KEY) return [];
+export async function searchVideos(query: string): Promise<PaginatedResult<Video>> {
+  if (!API_KEY) return { items: [], status: "error" };
   const channelId = await getChannelId();
-  if (!channelId) return [];
+  if (!channelId) return { items: [], status: "error" };
 
   try {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${query}&type=video&maxResults=20&order=date&key=${API_KEY}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
-    const data = await res.json();
+    if (!res.ok) return { items: [], status: "error" };
+    const data = await res.json() as YouTubeApiResponse;
 
     // Note: Search endpoint doesn't return view counts/durations directly, 
     // normally we'd do a second fetch but for speed/quota we might skip or do minimal.
     // For search results, we'll map what we have.
 
-    return (data.items || []).map((item: any) => ({
-      id: item.id.videoId,
-      title: item.snippet.title,
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url,
-      date: new Date(item.snippet.publishedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }),
-      channelTitle: item.snippet.channelTitle
+    const videos = (data.items || []).map((item) => ({
+      id: typeof item.id === "object" ? item.id?.videoId ?? "" : "",
+      title: item.snippet?.title ?? "Untitled video",
+      url: `https://www.youtube.com/watch?v=${typeof item.id === "object" ? item.id?.videoId ?? "" : ""}`,
+      thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || "",
+      date: item.snippet?.publishedAt ? new Date(item.snippet.publishedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : "",
+      channelTitle: item.snippet?.channelTitle,
+      speaker: extractSpeaker(item.snippet?.description, item.snippet?.title),
     }));
+    return { items: videos, status: videos.length ? "ok" : "empty" };
 
   } catch (e) {
     console.error("Search failed", e);
-    return [];
+    return { items: [], status: "error" };
   }
 }
 
 export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, pageToken?: string): Promise<PaginatedResult<Video>> {
   if (!API_KEY || playlistId.includes("xxxx")) {
-    return { items: [] };
+    return { items: [], status: "error" };
   }
 
   try {
@@ -224,10 +254,10 @@ export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, 
     const res = await fetch(playlistUrl, { next: { revalidate: 3600 } });
     if (!res.ok) throw new Error(`Playlist Fetch Failed: ${res.status}`);
 
-    const playlistData = await res.json();
-    if (!playlistData.items || playlistData.items.length === 0) return { items: [] };
+    const playlistData = await res.json() as YouTubeApiResponse;
+    if (!playlistData.items || playlistData.items.length === 0) return { items: [], status: "empty" };
 
-    const videoIds = playlistData.items.map((item: any) => item.snippet.resourceId.videoId).join(',');
+    const videoIds = playlistData.items.map((item) => item.snippet?.resourceId?.videoId).filter((id): id is string => Boolean(id)).join(',');
 
     // Cache Channel ID if first request
     if (playlistData.items[0]?.snippet?.channelId && !CACHED_CHANNEL_ID) {
@@ -240,44 +270,40 @@ export async function getLatestVideos(playlistId: string = DEFAULT_PLAYLIST_ID, 
 
     const detailsMap = new Map();
     if (detailsRes.ok) {
-      const detailsData = await detailsRes.json();
-      detailsData.items.forEach((item: any) => detailsMap.set(item.id, item));
+      const detailsData = await detailsRes.json() as YouTubeApiResponse;
+      detailsData.items?.forEach((item) => { if (typeof item.id === "string") detailsMap.set(item.id, item); });
     }
 
-    const videos = playlistData.items.map((item: any) => {
-      const videoId = item.snippet.resourceId.videoId;
+    const videos = playlistData.items.map((item) => {
+      const videoId = item.snippet?.resourceId?.videoId ?? "";
       const details = detailsMap.get(videoId);
 
-      const publishedAt = item.snippet.publishedAt;
-      const date = new Date(publishedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
+      const publishedAt = item.snippet?.publishedAt;
+      const date = publishedAt ? new Date(publishedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : "";
 
       return {
         id: videoId,
-        title: item.snippet.title,
+        title: item.snippet?.title ?? "Untitled video",
         url: `https://www.youtube.com/watch?v=${videoId}`,
-        thumbnail: item.snippet.thumbnails?.maxresdefault?.url || item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url,
+        thumbnail: item.snippet?.thumbnails?.maxresdefault?.url || item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || "",
         date: date,
-        duration: details ? formatDuration(details.contentDetails.duration) : "",
-        views: details ? formatViews(details.statistics.viewCount) : "",
-        likes: details ? formatViews(details.statistics.likeCount) : "",
-        commentCount: details ? formatViews(details.statistics.commentCount) : "",
-        tags: details?.snippet?.tags || []
+        duration: details?.contentDetails?.duration ? formatDuration(details.contentDetails.duration) : "",
+        views: formatViews(details?.statistics?.viewCount ?? "0"),
+        likes: formatViews(details?.statistics?.likeCount ?? "0"),
+        commentCount: formatViews(details?.statistics?.commentCount ?? "0"),
+        tags: details?.snippet?.tags ?? [],
+        speaker: extractSpeaker(item.snippet?.description, item.snippet?.title),
       };
     });
 
     return {
       items: videos,
-      nextPageToken: playlistData.nextPageToken
+      nextPageToken: playlistData.nextPageToken,
+      status: videos.length ? "ok" : "empty",
     };
 
   } catch (error) {
     console.error("YouTube Fetch Error:", error);
-    return { items: [] };
+    return { items: [], status: "error" };
   }
 }
-
-const MOCK_VIDEOS: Video[] = [
-  { id: "1", title: "Institutional Architectural Thought", url: "#", thumbnail: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab", date: "Oct 24, 2024", duration: "45:12", views: "1.2k" },
-  { id: "2", title: "Building for Durability", url: "#", thumbnail: "https://images.unsplash.com/photo-1487958449943-2429e8be8625", date: "Oct 18, 2024", duration: "28:05", views: "856" },
-  { id: "3", title: "The Architectural Gateway", url: "#", thumbnail: "https://images.unsplash.com/photo-1470723710355-95304d8aece4", date: "Sep 30, 2024", duration: "1:02:10", views: "3.4k" },
-];

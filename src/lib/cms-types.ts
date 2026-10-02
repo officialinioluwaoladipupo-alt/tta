@@ -14,6 +14,11 @@ export interface EventFields extends FieldSet {
     fldfWdfSuxHY7iSbA?: string; // Short Description
     fld61jNMCFHDGQ2Nq?: string; // Speakers (JSON string)
     fldLearningPoints?: string; // Learning Points
+    sessionNumber?: string;
+    format?: string;
+    recordingUrl?: string;
+    resources?: string;
+    sessionNotes?: string;
 }
 
 export interface HighlightFields extends FieldSet {
@@ -41,6 +46,11 @@ export interface EventFormData {
     shortDescription?: string;
     speakers?: string;
     learningPoints?: string;
+    sessionNumber?: string;
+    format?: string;
+    recordingUrl?: string;
+    resources?: string;
+    sessionNotes?: string;
 }
 
 export interface HighlightFormData {
