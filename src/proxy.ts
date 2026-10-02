@@ -21,7 +21,11 @@ export async function proxy(request: NextRequest) {
         const response = await auth0.middleware(request);
         if (isDashboard) {
             const session = await auth0.getSession(request);
-            if (!session) return NextResponse.redirect(new URL("/auth/login", request.url));
+            if (!session) {
+                const loginUrl = new URL("/auth/login", request.url);
+                loginUrl.searchParams.set("returnTo", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+                return NextResponse.redirect(loginUrl);
+            }
         }
         return response;
     } catch (error) {
