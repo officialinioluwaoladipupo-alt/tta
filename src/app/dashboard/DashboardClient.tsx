@@ -72,6 +72,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+    const [uploadedImagePublicId, setUploadedImagePublicId] = useState<string | null>(null);
     const [pendingAction, setPendingAction] = useState<string | null>(null);
     const [submissionMessage, setSubmissionMessage] = useState<string | null>(submissionError ? "We couldn't load submissions. Try again." : null);
 
@@ -92,12 +93,14 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
         const imgUrl = typeof evt.image === "string" ? evt.image : (imgVal && imgVal.length > 0) ? imgVal[0].url : null;
 
         setUploadedImageUrl(imgUrl);
+        setUploadedImagePublicId(typeof evt.imagePublicId === "string" ? evt.imagePublicId : null);
         setView("edit");
     };
 
     const handleCreate = () => {
         setEditingRecord(null);
         setUploadedImageUrl(null);
+        setUploadedImagePublicId(null);
         setView("create");
     };
 
@@ -372,6 +375,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     setLoading(true); setMessage(null);
                                     const data = Object.fromEntries(formData);
                                     if (uploadedImageUrl) data.image = uploadedImageUrl;
+                                    if (uploadedImagePublicId) data.imagePublicId = uploadedImagePublicId;
 
                                     let res;
                                     if (activeTab === 'events') {
@@ -465,20 +469,21 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                 <div className="space-y-8">
                                     {can("edit:media") && <ImageUpload
                                         label="Primary Asset"
+                                        entityType={activeTab === "events" ? "event" : "highlight"}
                                         currentImage={uploadedImageUrl || undefined} // passed from state or derived
-                                        onUploadComplete={(url) => setUploadedImageUrl(url)}
+                                        onUploadComplete={(url, publicId) => { setUploadedImageUrl(url); setUploadedImagePublicId(publicId); }}
                                     />}
 
                                     {/* Link Field is common-ish but keyed differently? No, kept as separate refs or check types */}
                                     {activeTab === 'events' ? (
                                         <div className="flex flex-col gap-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">External Link</label>
-                                                            <input name="link" defaultValue={eventField(editingRecord as ContentRecord<EventFields> | null, "link", "fld6Azz8y9qUZAXSx")} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="Luma RSVP URL" />
+                                                            <input name="link" type="url" defaultValue={eventField(editingRecord as ContentRecord<EventFields> | null, "link", "fld6Azz8y9qUZAXSx")} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://lu.ma/... (optional)" />
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">External Link</label>
-                                            <input name="link" defaultValue={(editingRecord as ContentRecord<HighlightFields> | null)?.fldwUq6RZ8GORfYEU} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://..." />
+                                            <input name="link" type="url" defaultValue={(editingRecord as ContentRecord<HighlightFields> | null)?.fldwUq6RZ8GORfYEU} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://... (optional)" />
                                         </div>
                                     )}
 

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Instagram } from "lucide-react";
+import { Instagram, Twitter } from "lucide-react";
 import type { GlobalSettings } from "@/lib/mdx";
 
 export default function Footer({ settings }: { settings?: GlobalSettings }) {
@@ -41,8 +41,9 @@ export default function Footer({ settings }: { settings?: GlobalSettings }) {
               ))}
             </h2>
             <div className="flex gap-4">
-              <SocialIcon label="Instagram" icon={<Instagram size={20} />} href="https://www.instagram.com/_tta.ng/" />
-              <SocialIcon label="X" icon={<XLogo />} href="https://x.com/TTA_Africa" />
+              <SocialIcon icon={<Twitter size={20} />} href="#" />
+              <SocialIcon icon={<Instagram size={20} />} href="https://www.instagram.com/_tta.ng/" />
+              <SocialIcon icon={<Twitter size={20} />} href="https://x.com/TTA_Africa" />
             </div>
           </div>
 
@@ -112,18 +113,10 @@ function FooterLink({ children, href }: { children: React.ReactNode, href: strin
   );
 }
 
-function SocialIcon({ icon, href, label }: { icon: React.ReactNode, href: string, label: string }) {
+function SocialIcon({ icon, href }: { icon: React.ReactNode, href: string }) {
   return (
-    <Link href={href} aria-label={label} target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white flex items-center justify-center hover:bg-accent hover:text-white transition-all border border-foreground/5">
+    <Link href={href} className="w-12 h-12 bg-white flex items-center justify-center hover:bg-accent hover:text-white transition-all border border-foreground/5">
       {icon}
     </Link>
-  );
-}
-
-function XLogo() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-      <path d="M18.9 2H22l-6.78 7.75L23.2 22h-6.25l-4.9-7.42L5.56 22H2.43l7.25-8.29L1.8 2h6.4l4.43 6.77L18.9 2Zm-1.1 18h1.73L7.28 3.9H5.42L17.8 20Z" />
-    </svg>
   );
 }

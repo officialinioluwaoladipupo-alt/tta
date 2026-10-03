@@ -2,11 +2,11 @@
 
 import { useState, useRef } from "react";
 import { Upload, ImageIcon, Loader2 } from "lucide-react";
-import { uploadImage } from "@/lib/cms-actions";
+import { completeImageUpload, createImageUploadSignature } from "@/lib/cms-actions";
 import Image from "next/image";
 
 interface Props {
-    onUploadComplete: (url: string) => void;
+    onUploadComplete: (url: string, publicId: string) => void;
     currentImage?: string;
     label: string;
     entityType?: "event" | "team" | "speaker" | "highlight" | "content";
@@ -53,15 +53,41 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
         // Upload
         setUploading(true);
         try {
-            // Convert to base64 for server action
-            const dataUrl = await toBase64(file);
-            const res = await uploadImage(dataUrl, file.name, entityType);
-
-            if (res.success && res.url) {
-                onUploadComplete(res.url);
-            } else {
-            setError(res.error || "Upload failed. Please try again.");
+            const signed = await createImageUploadSignature(file.name, entityType);
+            if (!signed.success) {
+                setError(signed.error);
+                return;
             }
+
+            const payload = new FormData();
+            payload.append("file", file);
+            payload.append("api_key", signed.apiKey);
+            payload.append("timestamp", String(signed.timestamp));
+            payload.append("folder", signed.folder);
+            payload.append("public_id", signed.uploadPublicId);
+            payload.append("allowed_formats", signed.allowedFormats);
+            payload.append("overwrite", String(signed.overwrite));
+            payload.append("signature", signed.signature);
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
+                method: "POST",
+                body: payload,
+            });
+            if (!response.ok) {
+                setError("Cloudinary could not receive this image. Check your Cloudinary settings and try again.");
+                return;
+            }
+            const uploaded = await response.json() as { public_id?: string };
+            if (uploaded.public_id !== signed.publicId) {
+                setError("Cloudinary returned an unexpected image. Please try again.");
+                return;
+            }
+
+            const result = await completeImageUpload(signed.publicId, file.name, entityType);
+            if (!result.success) {
+                setError(result.error);
+                return;
+            }
+            onUploadComplete(result.url, result.publicId);
         } catch (err) {
             console.error(err);
             setError("Upload failed. Check your connection and Cloudinary configuration, then try again.");
@@ -70,13 +96,6 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
-
-    const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-    });
 
     return (
         <div className="flex flex-col gap-3">
