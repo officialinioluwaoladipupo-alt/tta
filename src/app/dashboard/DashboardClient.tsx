@@ -312,8 +312,8 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                         <div key={item.id} className="bg-foreground/[0.02] border border-foreground/5 p-6 flex items-center justify-between group hover:border-accent/20 transition-all">
                                             <div className="flex items-center gap-6">
                                                 {image ? (
-                                                    <div className="w-16 h-16 bg-foreground/10 overflow-hidden border border-foreground/10">
-                                                <Image src={image} fill sizes="120px" className="object-contain" alt="" />
+                                                    <div className="relative w-16 h-16 shrink-0 bg-foreground/10 overflow-hidden border border-foreground/10">
+                                                <Image src={image} fill sizes="64px" className="object-cover" alt="" />
                                                     </div>
                                                 ) : null}
                                                 <div>
