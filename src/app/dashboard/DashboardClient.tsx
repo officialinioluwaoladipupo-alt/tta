@@ -299,14 +299,16 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     const evt = item as ContentRecord<EventFields>;
                                     const hlt = item as ContentRecord<HighlightFields>;
                                     const image = (typeof evt.image === "string" ? evt.image : undefined) || ((evt.fldC3VHA5QJfiLh9W && evt.fldC3VHA5QJfiLh9W.length > 0) ? evt.fldC3VHA5QJfiLh9W[0].url :
-                                        ((hlt.fld7Bc63XfnJ2rtNV && hlt.fld7Bc63XfnJ2rtNV.length > 0) ? hlt.fld7Bc63XfnJ2rtNV[0].url : null));
+                                        (typeof hlt.image === "string" ? hlt.image : undefined) || ((hlt.fld7Bc63XfnJ2rtNV && hlt.fld7Bc63XfnJ2rtNV.length > 0) ? hlt.fld7Bc63XfnJ2rtNV[0].url : null));
 
+                                    const highlightText = typeof hlt.text === "string" ? hlt.text : hlt.fldgZo63Sh0FIouxr;
+                                    const highlightActive = hlt.isActive === true || hlt.isActive === "on" || hlt.fldm41s0glSxCrw4Z === true;
                                     const title = activeTab === 'events' ? (eventField(evt, "title", "fld60g2Jlm4glr70e") || "Untitled Event") :
-                                        (hlt.fldgZo63Sh0FIouxr ? (hlt.fldgZo63Sh0FIouxr.substring(0, 50) + (hlt.fldgZo63Sh0FIouxr.length > 50 ? '...' : '')) : "Empty Highlight");
+                                        (highlightText ? (highlightText.substring(0, 50) + (highlightText.length > 50 ? '...' : '')) : "Empty Highlight");
 
                                     const meta = activeTab === 'events'
                                         ? `${eventField(evt, "startDate", "fldnqKLlla00mhERq") ? new Date(eventField(evt, "startDate", "fldnqKLlla00mhERq")).toLocaleDateString() : 'Date not set'} // ${eventField(evt, "format") || eventField(evt, "location", "fldCCH17B42hKfQM9") || 'Online'}`
-                                        : `Status: ${hlt.fldm41s0glSxCrw4Z ? 'Active' : 'Hidden'}`;
+                                        : `Status: ${highlightActive ? 'Active' : 'Hidden'}`;
 
                                     return (
                                         <div key={item.id} className="bg-foreground/[0.02] border border-foreground/5 p-6 flex items-center justify-between group hover:border-accent/20 transition-all">
@@ -445,18 +447,18 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                                     <>
                                                         <div className="flex flex-col gap-3 col-span-2">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Intelligence Snippet</label>
-                                                            <textarea name="text" defaultValue={rec?.fldgZo63Sh0FIouxr} rows={4} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40 resize-none" />
+                                                            <textarea name="text" defaultValue={typeof rec?.text === "string" ? rec.text : rec?.fldgZo63Sh0FIouxr} rows={4} required className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40 resize-none" />
                                                         </div>
                                                         <div className="flex flex-col gap-3">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Type</label>
-                                                            <select name="type" defaultValue={rec?.fldhj9z8zUncd2WHt} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground appearance-none">
+                                                            <select name="type" defaultValue={typeof rec?.type === "string" ? rec.type : rec?.fldhj9z8zUncd2WHt ?? "news"} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground appearance-none">
                                                                 <option value="news">News</option>
                                                                 <option value="speaker">Speaker</option>
                                                                 <option value="recap">Recap</option>
                                                             </select>
                                                         </div>
                                                         <div className="flex items-center gap-3 pt-6">
-                                                            <input name="isActive" type="checkbox" defaultChecked={rec?.fldm41s0glSxCrw4Z} className="w-5 h-5 bg-foreground/5 border-foreground/10 text-accent" />
+                                                            <input name="isActive" type="checkbox" defaultChecked={rec ? rec.isActive === true || rec.isActive === "on" || rec.fldm41s0glSxCrw4Z === true : true} className="w-5 h-5 bg-foreground/5 border-foreground/10 text-accent" />
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Active/Visible</label>
                                                         </div>
                                                     </>
@@ -483,7 +485,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-40">External Link</label>
-                                            <input name="link" type="url" defaultValue={(editingRecord as ContentRecord<HighlightFields> | null)?.fldwUq6RZ8GORfYEU} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://... (optional)" />
+                                            <input name="link" type="url" defaultValue={(() => { const rec = editingRecord as ContentRecord<HighlightFields> | null; return typeof rec?.link === "string" ? rec.link : rec?.fldwUq6RZ8GORfYEU; })()} className="bg-foreground/[0.03] border border-foreground/10 p-5 text-foreground focus:outline-none focus:border-accent/40" placeholder="https://... (optional)" />
                                         </div>
                                     )}
 

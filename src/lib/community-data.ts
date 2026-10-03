@@ -20,7 +20,7 @@ export async function getCommunityHighlights(): Promise<CommunityHighlight[]> {
             return type === "speaker" ? "speaker" : type === "recap" ? "recap" : "news";
         })(),
         link: contentString(record, "link", "fldwUq6RZ8GORfYEU"),
-        isActive: record.isActive === true || record.fldm41s0glSxCrw4Z === true,
+        isActive: record.isActive === true || record.isActive === "on" || record.fldm41s0glSxCrw4Z === true,
         expiryDate: contentString(record, "expiryDate", "fldj7sHOsPwLXNAzE"),
         image: contentString(record, "image") ?? getImageUrl(record.fld7Bc63XfnJ2rtNV),
     })).filter((highlight) => highlight.isActive);

@@ -20,7 +20,7 @@ const eventSchema = z.object({
   sessionNumber: z.string().trim().max(30).optional(), format: z.string().trim().max(100).optional(),
   recordingUrl: z.string().url().optional().or(z.literal("")), resources: z.string().max(10000).optional(), sessionNotes: z.string().max(10000).optional(),
 });
-const highlightSchema = z.object({ text: z.string().trim().min(1).max(2000), type: z.enum(["news", "speaker", "recap"]), link: z.string().url().optional().or(z.literal("")), isActive: z.union([z.boolean(), z.literal("on")]).optional(), image: z.string().url().optional(), imagePublicId: z.string().max(255).optional() });
+const highlightSchema = z.object({ text: z.string().trim().min(1).max(2000), type: z.enum(["news", "speaker", "recap"]), link: z.string().url().optional().or(z.literal("")), isActive: z.preprocess((value) => value === true || value === "on", z.boolean()), image: z.string().url().optional(), imagePublicId: z.string().max(255).optional() });
 const settingsSchema = z.object({ siteName: z.string().trim().min(1).max(120), siteDescription: z.string().max(500), marqueeText: z.string().trim().min(1).max(2000), footerMarqueeText: z.string().trim().min(1).max(200), defaultSeoImage: z.string().url().optional().or(z.literal("")), teamMembers: z.string().max(20000).optional() });
 const imageEntitySchema = z.enum(["event", "team", "speaker", "highlight", "content"]);
 
