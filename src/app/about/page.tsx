@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import TallyPopupButton from "@/components/ui/TallyPopupButton";
+import TeamSection from "@/components/about/TeamSection";
 import { getTeamMembers } from "@/lib/team-data";
 
 export const metadata: Metadata = {
@@ -97,6 +98,8 @@ export default async function About() {
           </p>
         </div>
       </section>
+
+      <TeamSection members={team} />
 
       <section className="mx-auto max-w-[1600px] px-6 py-20 md:py-32">
         <div className="grid gap-12 md:grid-cols-[0.45fr_1fr] md:gap-20">
