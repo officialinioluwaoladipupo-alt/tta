@@ -23,9 +23,24 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
         const file = e.target.files?.[0];
         if (!file) return;
         setError(null);
+        setFileInfo(null);
         if (!/[.](jpe?g|png|webp)$/i.test(file.name) || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setError("Only JPEG, PNG, and WebP images are allowed"); return; }
         if (file.size > 5 * 1024 * 1024) { setError("Image must be 5 MB or smaller"); return; }
-        const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => { const image = new window.Image(); image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight }); image.onerror = () => reject(new Error("The image file is corrupt or unreadable")); image.src = URL.createObjectURL(file); });
+        let dimensions: { width: number; height: number };
+        const objectUrl = URL.createObjectURL(file);
+        try {
+            dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+                const image = new window.Image();
+                image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+                image.onerror = () => reject(new Error("The image file is corrupt or unreadable"));
+                image.src = objectUrl;
+            });
+        } catch {
+            setError("This image is corrupt or could not be opened. Try another file.");
+            URL.revokeObjectURL(objectUrl);
+            return;
+        }
+        URL.revokeObjectURL(objectUrl);
         setFileInfo({ name: file.name, size: file.size, ...dimensions });
 
         // Preview
@@ -49,8 +64,10 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
             }
         } catch (err) {
             console.error(err);
+            setError("Upload failed. Check your connection and Cloudinary configuration, then try again.");
         } finally {
             setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
@@ -95,7 +112,7 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
             />
             {fileInfo && <p className="text-xs text-foreground/60">{fileInfo.name} · {(fileInfo.size / 1024 / 1024).toFixed(2)} MB · {fileInfo.width}×{fileInfo.height}px</p>}
             {error && <p role="alert" className="text-xs text-red-600">{error}</p>}

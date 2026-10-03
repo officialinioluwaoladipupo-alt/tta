@@ -4,6 +4,12 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  experimental: {
+    serverActions: {
+      // A 5 MB image expands to about 6.7 MB when sent as a base64 data URL.
+      bodySizeLimit: "7mb",
+    },
+  },
   images: {
     remotePatterns: [
       {
