@@ -103,11 +103,11 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
 
             <div
                 onClick={() => fileInputRef.current?.click()}
-                className="relative aspect-video w-full bg-foreground/[0.03] border border-dashed border-foreground/10 flex flex-col items-center justify-center cursor-pointer group hover:border-accent/40 transition-all overflow-hidden"
+                className="relative h-48 w-full max-w-2xl bg-foreground/[0.03] border border-dashed border-foreground/10 flex flex-col items-center justify-center cursor-pointer group hover:border-accent/40 transition-all overflow-hidden"
             >
                 {preview ? (
                     <>
-                        <Image src={preview} alt="Preview" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                        <Image src={preview} alt="Preview" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-contain" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <Upload className="text-white" size={24} />
                         </div>

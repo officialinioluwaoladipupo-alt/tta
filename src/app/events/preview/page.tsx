@@ -71,7 +71,7 @@ export default async function EventPreviewPage({ searchParams }: Props) {
           <div className="grid gap-6 md:grid-cols-2">
             {draft.speakers.map((speaker, index) => (
               <article key={speaker.id || `${speaker.name}-${index}`} className="flex gap-5 border border-foreground/10 p-5">
-                {speaker.avatar ? <Image src={speaker.avatar} alt={speaker.name} width={80} height={80} className="h-20 w-20 rounded-full object-cover" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-2xl font-black">{speaker.name?.[0] || "?"}</div>}
+                {speaker.avatar ? <Image src={speaker.avatar} alt={speaker.name} width={80} height={80} className="h-20 w-20 object-contain" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center bg-foreground/10 text-2xl font-black">{speaker.name?.[0] || "?"}</div>}
                 <div><h3 className="font-black uppercase">{speaker.name || "Unnamed speaker"}</h3><p className="mt-1 text-xs uppercase text-accent">{[speaker.title || speaker.role, speaker.organization].filter(Boolean).join(" · ")}</p><p className="mt-2 text-sm text-foreground/60">{speaker.topic}</p><p className="mt-2 text-sm">{speaker.bio}</p></div>
               </article>
             ))}

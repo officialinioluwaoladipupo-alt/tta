@@ -61,8 +61,8 @@ export default async function EventPage({ params }: Props) {
         </header>
 
         {event.image && (
-          <div className="relative mt-10 aspect-[16/7] overflow-hidden bg-foreground/5">
-            <Image src={event.image} alt="" fill className="object-cover" priority sizes="100vw" />
+          <div className="relative mt-10 h-[clamp(14rem,38vw,32rem)] overflow-hidden bg-foreground/5">
+            <Image src={event.image} alt="" fill className="object-contain" priority sizes="100vw" />
           </div>
         )}
 
@@ -90,7 +90,7 @@ export default async function EventPage({ params }: Props) {
               {event.speakers.map((speaker, index) => (
                 <article key={speaker.id || `${speaker.name}-${index}`} className="grid gap-5 border border-foreground/10 p-5 sm:grid-cols-[8rem_1fr] sm:gap-7 sm:p-7">
                   <div className="relative aspect-square w-full overflow-hidden bg-[#ebe7e1] sm:w-32">
-                    {speaker.avatar ? <Image src={speaker.avatar} alt={speaker.name} fill sizes="128px" className="object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-4xl font-black text-accent">{speaker.name?.slice(0, 1) || "?"}</div>}
+                    {speaker.avatar ? <Image src={speaker.avatar} alt={speaker.name} fill sizes="128px" className="object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-4xl font-black text-accent">{speaker.name?.slice(0, 1) || "?"}</div>}
                   </div>
                   <div className="self-center">
                     <h3 className="text-2xl font-black uppercase leading-tight tracking-tight">{speaker.name}</h3>

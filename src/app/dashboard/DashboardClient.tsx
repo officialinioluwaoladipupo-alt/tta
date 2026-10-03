@@ -313,7 +313,7 @@ export default function DashboardClient({ initialSubmissions, initialEvents, ini
                                             <div className="flex items-center gap-6">
                                                 {image ? (
                                                     <div className="w-16 h-16 bg-foreground/10 overflow-hidden border border-foreground/10">
-                                                <Image src={image} fill sizes="120px" className="object-cover" alt="" />
+                                                <Image src={image} fill sizes="120px" className="object-contain" alt="" />
                                                     </div>
                                                 ) : null}
                                                 <div>
