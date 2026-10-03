@@ -107,7 +107,7 @@ export default function ImageUpload({ onUploadComplete, currentImage, label, ent
             >
                 {preview ? (
                     <>
-                        <Image src={preview} alt="Preview" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-contain" />
+                        <Image src={preview} alt="Preview" width={1280} height={720} sizes="(max-width: 768px) 100vw, 50vw" className="h-full w-full object-contain" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <Upload className="text-white" size={24} />
                         </div>
